@@ -1,0 +1,46 @@
+<link href="/app.css" rel="stylesheet" />
+<div id="sidebar">
+	<h1>
+		<a href="/about">React Router Contacts</a>
+	</h1>
+	<div>
+		<form id="search-form" role="search">
+			<input
+				aria-label="Search contacts"
+				id="q"
+				name="q"
+				placeholder="Search"
+				type="search"
+			/>
+			<div
+				aria-hidden
+				hidden
+				id="search-spinner">
+			</div>
+		</form>
+		<form method="post">
+			<button type="submit">New</button>
+		</form>
+	</div>
+	<nav>
+		<!--${contacts}-->
+		<template id="no-contacts">
+			<p>
+				<i>No contacts</i>
+			</p>
+		</template>
+		<template id="contacts">
+			<ul>
+				<!--${items}-->
+			</ul>
+		</template>
+		<template id="contact-item">
+			<li>
+				<a href="/contacts/${contact.id}">${contact.first} ${contact.last}</a>
+			</li>
+		</template>
+	</nav>
+</div>
+<div id="detail">
+	<slot name="content"></slot>
+</div>
