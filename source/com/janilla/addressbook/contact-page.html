@@ -1,48 +1,48 @@
 <div id="contact">
-  <div>
-    <img
-      alt="${contact.first} ${contact.last} avatar"
-      src="${contact.avatar}"
-    />
-  </div>
+	<div>
+		<img
+			alt="${contact.first} ${contact.last} avatar"
+			src="${contact.avatar}"
+		/>
+	</div>
 
-  <div>
-    <h1>
-      <!--${name}-->
-      <template id="name">${contact.first} ${contact.last}</template>
-      <template id="no-name">
-        <i>No Name</i>
-      </template>
-      <favorite-x></favorite-x>
-    </h1>
+	<div>
+		<h1>
+			<!--${name}-->
+			<template id="name">${contact.first} ${contact.last}</template>
+			<template id="no-name">
+				<i>No Name</i>
+			</template>
+			<favorite-x></favorite-x>
+		</h1>
 
-    <!--${twitter}-->
-    <template id="twitter">
-      <p>
-        <a
-          href="https://twitter.com/${contact.twitter}"
-        >
-          ${contact.twitter}
-        </a>
-      </p>
-    </template>
+		<!--${twitter}-->
+		<template id="twitter">
+			<p>
+				<a
+					href="https://twitter.com/${contact.twitter}"
+				>
+					${contact.twitter}
+				</a>
+			</p>
+		</template>
 
-    <!--${notes}-->
-    <template id="notes">
-      <p>${contact.notes}</p>
-    </template>
+		<!--${notes}-->
+		<template id="notes">
+			<p>${contact.notes}</p>
+		</template>
 
-    <div>
-      <form action="edit">
-        <button type="submit">Edit</button>
-      </form>
+		<div>
+			<form action="edit">
+				<button type="submit">Edit</button>
+			</form>
 
-      <form
-        action="destroy"
-        method="post"
-      >
-        <button type="submit">Delete</button>
-      </Form>
-    </div>
-  </div>
+			<form
+				action="destroy"
+				method="post"
+			>
+				<button type="submit">Delete</button>
+			</Form>
+		</div>
+	</div>
 </div>

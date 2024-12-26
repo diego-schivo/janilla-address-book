@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 import { SlottableElement } from "./slottable-element.js";
+import { removeAllChildren } from "./dom-utils.js";
 
 export default class AboutPage extends SlottableElement {
 
@@ -37,8 +38,22 @@ export default class AboutPage extends SlottableElement {
 		super();
 	}
 
+	async updateDisplay() {
+		// console.log("AboutPage.updateDisplay");
+		if (!this.updateDisplayCalled) {
+			this.updateDisplayCalled = true;
+			if (this.matches("[slot]"))
+				return;
+		}
+		await super.updateDisplay();
+	}
+
 	renderState() {
 		// console.log("AboutPage.renderState");
+		if (!this.renderStateCalled) {
+			this.renderStateCalled = true;
+			removeAllChildren(this);
+		}
 		this.appendChild(this.interpolateDom());
 	}
 }

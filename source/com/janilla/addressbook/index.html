@@ -12,7 +12,12 @@
 			<contact-page></contact-page>
 			<edit-contact></edit-contact>
 		</sidebar-layout>
-		<about-page></about-page>
+		<!--${about}-->
 	</address-book>
+	<template id="about">
+		<about-page slot="${slot}">
+			<!--${content}-->
+		</about-page>
+	</template>
 </body>
 </html>

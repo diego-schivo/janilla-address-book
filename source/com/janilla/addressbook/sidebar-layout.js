@@ -40,14 +40,19 @@ export default class SidebarLayout extends SlottableElement {
 
 	async computeState() {
 		// console.log("SidebarLayout.computeState");
-		const u = new URL("/api/contacts", location.href);
-		const q = this.dataset.query;
-		if (q)
-			u.searchParams.append("query", q);
-		const cc = await (await fetch(u)).json();
-		const s = { contacts: cc };
-		history.replaceState(s, "");
-		return s;
+		try {
+			this.dispatchEvent(new CustomEvent("load-start", { bubbles: true }));
+			const u = new URL("/api/contacts", location.href);
+			const q = this.dataset.query;
+			if (q)
+				u.searchParams.append("query", q);
+			const cc = await (await fetch(u)).json();
+			const s = { contacts: cc };
+			history.replaceState(s, "");
+			return s;
+		} finally {
+			this.dispatchEvent(new CustomEvent("load-end", { bubbles: true }));
+		}
 	}
 
 	renderState() {

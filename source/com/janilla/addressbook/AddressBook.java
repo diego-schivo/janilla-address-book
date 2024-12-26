@@ -42,7 +42,6 @@ import com.janilla.web.ApplicationHandlerBuilder;
 import com.janilla.web.Handle;
 import com.janilla.web.Render;
 
-@Render(template = "index.html")
 public class AddressBook {
 
 	public static void main(String[] args) {
@@ -101,8 +100,23 @@ public class AddressBook {
 		}
 	}
 
-	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
 	public AddressBook application() {
 		return this;
+	}
+
+	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
+	public Index index(String path) {
+		return new Index(path.equals("/about") ? new About("content", new Content()) : new About(false, null));
+	}
+
+	@Render(template = "index.html")
+	public record Index(About about) {
+	}
+
+	@Render(template = "about")
+	public record About(Object slot, @Render(template = "about-page.html") Content content) {
+	}
+
+	public record Content() {
 	}
 }

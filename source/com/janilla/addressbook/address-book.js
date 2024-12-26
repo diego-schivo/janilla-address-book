@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { FlexibleElement } from "./flexible-element.js";
+import { UpdatableElement } from "./updatable-element.js";
 
 const updateElement = (element, active, more) => {
 	if (active) {
@@ -33,11 +33,9 @@ const updateElement = (element, active, more) => {
 		more(element, active);
 }
 
-export default class AddressBook extends FlexibleElement {
+export default class AddressBook extends UpdatableElement {
 
-	static get templateName() {
-		return "address-book";
-	}
+	loadCount = 0;
 
 	constructor() {
 		super();
@@ -49,12 +47,16 @@ export default class AddressBook extends FlexibleElement {
 		super.connectedCallback();
 		addEventListener("popstate", this.handlePopState);
 		this.addEventListener("click", this.handleClick);
+		this.addEventListener("load-start", this.handleLoadStart);
+		this.addEventListener("load-end", this.handleLoadEnd);
 	}
 
 	disconnectedCallback() {
 		// console.log("AddressBook.disconnectedCallback");
 		removeEventListener("popstate", this.handlePopState);
 		this.removeEventListener("click", this.handleClick);
+		this.removeEventListener("load-start", this.handleLoadStart);
+		this.removeEventListener("load-end", this.handleLoadEnd);
 	}
 
 	handleClick = event => {
@@ -68,6 +70,21 @@ export default class AddressBook extends FlexibleElement {
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
+	handleLoadStart = () => {
+		console.log("AddressBook.handleLoadStart");
+		this.loadCount++;
+		this.shadowRoot.querySelector("#loading-splash").style.display = "";
+		this.shadowRoot.querySelector("slot").style.display = "none";
+	}
+
+	handleLoadEnd = () => {
+		console.log("AddressBook.handleLoadEnd");
+		if (--this.loadCount === 0) {
+			this.shadowRoot.querySelector("#loading-splash").style.display = "none";
+			this.shadowRoot.querySelector("slot").style.display = "";
+		}
+	}
+
 	handlePopState = event => {
 		// console.log("AddressBook.handlePopState", event);
 		this.updateContent(event.state);
@@ -75,8 +92,17 @@ export default class AddressBook extends FlexibleElement {
 
 	async updateDisplay() {
 		// console.log("AddressBook.updateDisplay");
-		await super.updateDisplay();
-		this.shadowRoot.appendChild(this.interpolateDom());
+		this.shadowRoot.innerHTML = `<link href="/app.css" rel="stylesheet" />
+<div id="loading-splash" style="display: none">
+	<div id="loading-splash-spinner"></div>
+	<p>Loading, please wait...</p>
+</div>
+<slot name="content"></slot>`;
+		if (!this.updateDisplayCalled) {
+			this.updateDisplayCalled = true;
+			if (this.querySelector("[slot]"))
+				return;
+		}
 		this.updateContent();
 	}
 
