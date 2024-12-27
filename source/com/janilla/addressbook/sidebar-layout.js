@@ -42,11 +42,13 @@ export default class SidebarLayout extends SlottableElement {
 		// console.log("SidebarLayout.connectedCallback");
 		super.connectedCallback();
 		this.shadowRoot.addEventListener("submit", this.handleSubmit);
+		this.shadowRoot.addEventListener("update-contact", this.handleUpdateContact);
 	}
 
 	disconnectedCallback() {
 		// console.log("SidebarLayout.disconnectedCallback");
 		this.shadowRoot.removeEventListener("submit", this.handleSubmit);
+		this.shadowRoot.removeEventListener("update-contact", this.handleUpdateContact);
 	}
 
 	handleSubmit = async event => {
@@ -56,11 +58,19 @@ export default class SidebarLayout extends SlottableElement {
 			return;
 		event.preventDefault();
 		event.stopPropagation();
-		await fetch("/api/contacts", {
+		const c = await (await fetch("/api/contacts", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify({})
-		});
+		})).json();		
+		this.state = null;
+		this.requestUpdate();
+		history.pushState(null, "", `/contacts/${c.id}/edit`);
+		dispatchEvent(new CustomEvent("popstate"));
+	}
+
+	handleUpdateContact = async event => {
+		console.log("SidebarLayout.handleUpdateContact", event);
 		this.state = null;
 		this.requestUpdate();
 	}
@@ -81,6 +91,7 @@ export default class SidebarLayout extends SlottableElement {
 			const cc = await (await fetch(u)).json();
 			const s = { contacts: cc };
 			history.replaceState(s, "");
+			dispatchEvent(new CustomEvent("popstate"));
 			return s;
 		} finally {
 			if (!csc)
@@ -100,6 +111,7 @@ export default class SidebarLayout extends SlottableElement {
 				items: cc.map(x => ({
 					$template: "item",
 					...x,
+					class: location.pathname === `/contacts/${x.id}` ? (history.state ? "active" : "pending") : null,
 					name: {
 						$template: x.first || x.last ? "name" : "no-name",
 						...x

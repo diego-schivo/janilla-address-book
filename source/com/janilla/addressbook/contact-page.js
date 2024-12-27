@@ -52,7 +52,8 @@ export default class ContactPage extends SlottableElement {
 		console.log("ContactPage.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		history.pushState({}, "", `/contacts/${this.state.id}/edit`);
+		const c = this.state;
+		history.pushState(null, "", `/contacts/${c.id}/edit`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
@@ -68,6 +69,7 @@ export default class ContactPage extends SlottableElement {
 		// console.log("ContactPage.computeState");
 		const s = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 		history.replaceState(s, "");
+		dispatchEvent(new CustomEvent("popstate"));
 		return s;
 	}
 
@@ -78,7 +80,7 @@ export default class ContactPage extends SlottableElement {
 			return;
 		this.appendChild(this.interpolateDom({
 			$template: "",
-			contact: c,
+			...c,
 			name: {
 				$template: c.first || c.last ? "name" : "no-name",
 				...c

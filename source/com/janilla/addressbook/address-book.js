@@ -66,7 +66,7 @@ export default class AddressBook extends UpdatableElement {
 			return;
 		event.preventDefault();
 		const u = new URL(a.href);
-		history.pushState({}, "", u.pathname + u.search);
+		history.pushState(null, "", u.pathname + u.search);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
@@ -86,8 +86,9 @@ export default class AddressBook extends UpdatableElement {
 	}
 
 	handlePopState = event => {
-		// console.log("AddressBook.handlePopState", event);
+		console.log("AddressBook.handlePopState", event);
 		this.updateContent(event.state);
+		this.querySelector("sidebar-layout[slot]")?.requestUpdate();
 	}
 
 	async updateDisplay() {
@@ -106,20 +107,21 @@ export default class AddressBook extends UpdatableElement {
 		this.updateContent();
 	}
 
-	updateContent() {
+	updateContent(state) {
 		// console.log("AddressBook.updateContent");
-		// Array.prototype.forEach.call(this.querySelectorAll("*"), x => x.removeAttribute("slot"));
 		const lp = location.pathname;
 		updateElement(this.querySelector("sidebar-layout"), lp === "/" || lp.startsWith("/contacts/"));
 		updateElement(this.querySelector("home-page"), lp === "/");
 		const m = lp.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
 		updateElement(this.querySelector("contact-page"), m[1] && !m[2], (el, a) => {
+			el.state = a ? state : undefined;
 			if (a)
 				el.setAttribute("data-id", m[1]);
 			else
 				el.removeAttribute("data-id");
 		});
 		updateElement(this.querySelector("edit-contact"), m[1] && m[2], (el, a) => {
+			el.state = a ? state : undefined;
 			if (a)
 				el.setAttribute("data-id", m[1]);
 			else

@@ -52,33 +52,35 @@ export default class EditContact extends SlottableElement {
 		console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		await fetch(`/api/contacts/${this.state.id}`, {
+		const c = await (await fetch(`/api/contacts/${this.state.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
-		});
-		history.pushState({}, "", `/contacts/${this.state.id}`);
+		})).json();
+		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
+		history.pushState(null, "", `/contacts/${c.id}`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	async updateDisplay() {
-		// console.log("EditContact.updateDisplay");
-		const c = this.state?.contact;
+		console.log("EditContact.updateDisplay");
+		const c = this.state;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;
 		await super.updateDisplay();
 	}
 
 	async computeState() {
-		// console.log("EditContact.computeState");
+		console.log("EditContact.computeState");
 		const s = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 		history.replaceState(s, "");
+		dispatchEvent(new CustomEvent("popstate"));
 		return s;
 	}
 
 	renderState() {
 		// console.log("EditContact.renderState");
-		const c = this.state?.contact;
+		const c = this.state;
 		if (!c)
 			return;
 		this.appendChild(this.interpolateDom({
