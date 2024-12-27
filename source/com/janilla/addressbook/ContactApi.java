@@ -24,7 +24,9 @@
 package com.janilla.addressbook;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.janilla.persistence.Persistence;
@@ -39,8 +41,12 @@ public class ContactApi {
 	@Handle(method = "GET", path = "/api/contacts")
 	public Stream<Contact> list(@Bind("query") String query) {
 		var cc = persistence.crud(Contact.class);
-		return cc.read(query == null || query.isEmpty() ? cc.list()
-				: cc.filter("last", x -> ((String) x).toLowerCase().contains(query.toLowerCase())));
+		var q = query != null && !query.isEmpty() ? query.toLowerCase().chars().distinct()
+				.mapToObj(x -> String.valueOf((char) x)).collect(Collectors.toCollection(HashSet::new)) : null;
+		return cc.read(q == null ? cc.list() : cc.filter("last", x -> {
+			var s = ((String) x).toLowerCase();
+			return q.stream().allMatch(s::contains);
+		}));
 	}
 
 	@Handle(method = "POST", path = "/api/contacts")
@@ -57,5 +63,10 @@ public class ContactApi {
 	public Contact update(long id, Contact contact) {
 		return persistence.crud(Contact.class).update(id,
 				x -> Reflection.copy(contact, x, y -> !Set.of("id", "createdAt").contains(y)));
+	}
+
+	@Handle(method = "DELETE", path = "/api/contacts/(\\d+)")
+	public Contact delete(long id) {
+		return persistence.crud(Contact.class).delete(id);
 	}
 }

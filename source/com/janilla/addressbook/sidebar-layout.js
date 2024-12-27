@@ -43,12 +43,16 @@ export default class SidebarLayout extends SlottableElement {
 		super.connectedCallback();
 		this.shadowRoot.addEventListener("submit", this.handleSubmit);
 		this.shadowRoot.addEventListener("update-contact", this.handleUpdateContact);
+		this.shadowRoot.addEventListener("delete-contact", this.handleDeleteContact);
+		this.shadowRoot.addEventListener("input", this.handleInput);
 	}
 
 	disconnectedCallback() {
 		// console.log("SidebarLayout.disconnectedCallback");
 		this.shadowRoot.removeEventListener("submit", this.handleSubmit);
 		this.shadowRoot.removeEventListener("update-contact", this.handleUpdateContact);
+		this.shadowRoot.removeEventListener("delete-contact", this.handleDeleteContact);
+		this.shadowRoot.removeEventListener("input", this.handleInput);
 	}
 
 	handleSubmit = async event => {
@@ -62,7 +66,7 @@ export default class SidebarLayout extends SlottableElement {
 			method: "POST",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify({})
-		})).json();		
+		})).json();
 		this.state = null;
 		this.requestUpdate();
 		history.pushState(null, "", `/contacts/${c.id}/edit`);
@@ -71,6 +75,21 @@ export default class SidebarLayout extends SlottableElement {
 
 	handleUpdateContact = async event => {
 		console.log("SidebarLayout.handleUpdateContact", event);
+		this.state = null;
+		this.requestUpdate();
+	}
+
+	handleDeleteContact = async event => {
+		console.log("SidebarLayout.handleDeleteContact", event);
+		this.state = null;
+		this.requestUpdate();
+	}
+
+	handleInput = async event => {
+		console.log("SidebarLayout.handleInput", event);
+		const u = new URL(location.href);
+		u.searchParams.set("q", event.target.value);
+		history.replaceState(null, "", u.pathname + u.search);
 		this.state = null;
 		this.requestUpdate();
 	}
@@ -85,7 +104,7 @@ export default class SidebarLayout extends SlottableElement {
 			if (!csc)
 				this.dispatchEvent(new CustomEvent("load-start", { bubbles: true }));
 			const u = new URL("/api/contacts", location.href);
-			const q = this.dataset.query;
+			const q = new URLSearchParams(location.search).get("q");
 			if (q)
 				u.searchParams.append("query", q);
 			const cc = await (await fetch(u)).json();
@@ -106,18 +125,21 @@ export default class SidebarLayout extends SlottableElement {
 			return;
 		this.shadowRoot.appendChild(this.interpolateDom({
 			$template: "",
+			q: new URL(location.href).searchParams.get("q"),
 			contacts: {
 				$template: cc.length ? "contacts" : "no-contacts",
 				items: cc.map(x => ({
 					$template: "item",
 					...x,
-					class: location.pathname === `/contacts/${x.id}` ? (history.state ? "active" : "pending") : null,
+					class: x.id === history.state?.contact?.id ? "active"
+						: `${location.pathname}/`.startsWith(`/contacts/${x.id}/`) ? "pending" : null,
 					name: {
 						$template: x.first || x.last ? "name" : "no-name",
 						...x
 					}
 				}))
-			}
+			},
+			detailClass: !history.state ? "loading" : null
 		}));
 	}
 }

@@ -11,6 +11,7 @@
 				name="q"
 				placeholder="Search"
 				type="search"
+				value="${q}"
 			/>
 			<div
 				aria-hidden
@@ -45,6 +46,6 @@
 		</template>
 	</nav>
 </div>
-<div id="detail">
+<div id="detail" class="${detailClass}">
 	<slot name="content"></slot>
 </div>

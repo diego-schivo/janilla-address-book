@@ -41,30 +41,41 @@ export default class EditContact extends SlottableElement {
 		// console.log("EditContact.connectedCallback");
 		super.connectedCallback();
 		this.addEventListener("submit", this.handleSubmit);
+		this.addEventListener("click", this.handleClick);
 	}
 
 	disconnectedCallback() {
 		// console.log("EditContact.disconnectedCallback");
 		this.removeEventListener("submit", this.handleSubmit);
+		this.removeEventListener("click", this.handleClick);
 	}
 
 	handleSubmit = async event => {
 		console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const c = await (await fetch(`/api/contacts/${this.state.id}`, {
+		const c = this.state.contact;
+		await fetch(`/api/contacts/${this.state.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
-		})).json();
+		});
 		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
 		history.pushState(null, "", `/contacts/${c.id}`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
+	handleClick = async event => {
+		console.log("EditContact.handleClick", event);
+		if (!event.target.matches('[type="button"]'))
+			return;
+		event.stopPropagation();
+		history.back();
+	}
+
 	async updateDisplay() {
 		console.log("EditContact.updateDisplay");
-		const c = this.state;
+		const c = this.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;
 		await super.updateDisplay();
@@ -72,7 +83,8 @@ export default class EditContact extends SlottableElement {
 
 	async computeState() {
 		console.log("EditContact.computeState");
-		const s = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+		const s = { contact: c };
 		history.replaceState(s, "");
 		dispatchEvent(new CustomEvent("popstate"));
 		return s;
@@ -80,7 +92,7 @@ export default class EditContact extends SlottableElement {
 
 	renderState() {
 		// console.log("EditContact.renderState");
-		const c = this.state;
+		const c = this.state?.contact;
 		if (!c)
 			return;
 		this.appendChild(this.interpolateDom({

@@ -52,14 +52,26 @@ export default class ContactPage extends SlottableElement {
 		console.log("ContactPage.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const c = this.state;
-		history.pushState(null, "", `/contacts/${c.id}/edit`);
-		dispatchEvent(new CustomEvent("popstate"));
+		const c = this.state.contact;
+		switch (event.target.method) {
+			case "get":
+				history.pushState(null, "", `/contacts/${c.id}/edit`);
+				dispatchEvent(new CustomEvent("popstate"));
+				break;
+			case "post":
+				if (!confirm("Please confirm you want to delete this record."))
+					return;
+				await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
+				this.dispatchEvent(new CustomEvent("delete-contact", { bubbles: true }));
+				history.pushState(null, "", "/");
+				dispatchEvent(new CustomEvent("popstate"));
+				break;
+		}
 	}
 
 	async updateDisplay() {
 		// console.log("ContactPage.updateDisplay");
-		const c = this.state;
+		const c = this.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;
 		await super.updateDisplay();
@@ -67,7 +79,8 @@ export default class ContactPage extends SlottableElement {
 
 	async computeState() {
 		// console.log("ContactPage.computeState");
-		const s = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+		const s = { contact: c };
 		history.replaceState(s, "");
 		dispatchEvent(new CustomEvent("popstate"));
 		return s;
@@ -75,7 +88,7 @@ export default class ContactPage extends SlottableElement {
 
 	renderState() {
 		// console.log("ContactPage.renderState");
-		const c = this.state;
+		const c = this.state?.contact;
 		if (!c)
 			return;
 		this.appendChild(this.interpolateDom({
