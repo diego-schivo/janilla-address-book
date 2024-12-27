@@ -23,10 +23,16 @@
  */
 package com.janilla.addressbook;
 
+import java.time.Instant;
+
 import com.janilla.persistence.Index;
 import com.janilla.persistence.Store;
 
 @Store
 @Index(sort = "last")
-public record Contact(Long id, String avatar, String first, String last, String twitter) {
+public record Contact(Long id, Instant createdAt, String avatar, String first, String last, String twitter) {
+
+	public Contact withCreatedAt(Instant createdAt) {
+		return new Contact(id, createdAt, avatar, first, last, twitter);
+	}
 }

@@ -23,9 +23,12 @@
  */
 package com.janilla.addressbook;
 
+import java.time.Instant;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import com.janilla.persistence.Persistence;
+import com.janilla.reflect.Reflection;
 import com.janilla.web.Bind;
 import com.janilla.web.Handle;
 
@@ -40,8 +43,19 @@ public class ContactApi {
 				: cc.filter("last", x -> ((String) x).toLowerCase().contains(query.toLowerCase())));
 	}
 
+	@Handle(method = "POST", path = "/api/contacts")
+	public Contact create(Contact contact) {
+		return persistence.crud(Contact.class).create(contact.withCreatedAt(Instant.now()));
+	}
+
 	@Handle(method = "GET", path = "/api/contacts/(\\d+)")
 	public Contact read(long id) {
 		return persistence.crud(Contact.class).read(id);
+	}
+
+	@Handle(method = "PUT", path = "/api/contacts/(\\d+)")
+	public Contact update(long id, Contact contact) {
+		return persistence.crud(Contact.class).update(id,
+				x -> Reflection.copy(contact, x, y -> !Set.of("id", "createdAt").contains(y)));
 	}
 }

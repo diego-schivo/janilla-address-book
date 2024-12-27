@@ -119,6 +119,12 @@ export default class AddressBook extends UpdatableElement {
 			else
 				el.removeAttribute("data-id");
 		});
+		updateElement(this.querySelector("edit-contact"), m[1] && m[2], (el, a) => {
+			if (a)
+				el.setAttribute("data-id", m[1]);
+			else
+				el.removeAttribute("data-id");
+		});
 		updateElement(this.querySelector("about-page"), lp === "/about");
 	}
 }

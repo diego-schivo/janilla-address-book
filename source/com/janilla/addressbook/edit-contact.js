@@ -23,14 +23,14 @@
  */
 import { SlottableElement } from "./slottable-element.js";
 
-export default class ContactPage extends SlottableElement {
+export default class EditContact extends SlottableElement {
 
 	static get observedAttributes() {
 		return ["data-id", "slot"];
 	}
 
 	static get templateName() {
-		return "contact-page";
+		return "edit-contact";
 	}
 
 	constructor() {
@@ -38,59 +38,52 @@ export default class ContactPage extends SlottableElement {
 	}
 
 	connectedCallback() {
-		// console.log("ContactPage.connectedCallback");
+		// console.log("EditContact.connectedCallback");
 		super.connectedCallback();
 		this.addEventListener("submit", this.handleSubmit);
 	}
 
 	disconnectedCallback() {
-		// console.log("ContactPage.disconnectedCallback");
+		// console.log("EditContact.disconnectedCallback");
 		this.removeEventListener("submit", this.handleSubmit);
 	}
 
 	handleSubmit = async event => {
-		console.log("ContactPage.handleSubmit", event);
+		console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		history.pushState({}, "", `/contacts/${this.state.id}/edit`);
+		await fetch(`/api/contacts/${this.state.id}`, {
+			method: "PUT",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
+		});
+		history.pushState({}, "", `/contacts/${this.state.id}`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	async updateDisplay() {
-		// console.log("ContactPage.updateDisplay");
-		const c = this.state;
+		// console.log("EditContact.updateDisplay");
+		const c = this.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;
 		await super.updateDisplay();
 	}
 
 	async computeState() {
-		// console.log("ContactPage.computeState");
+		// console.log("EditContact.computeState");
 		const s = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 		history.replaceState(s, "");
 		return s;
 	}
 
 	renderState() {
-		// console.log("ContactPage.renderState");
-		const c = this.state;
+		// console.log("EditContact.renderState");
+		const c = this.state?.contact;
 		if (!c)
 			return;
 		this.appendChild(this.interpolateDom({
 			$template: "",
-			contact: c,
-			name: {
-				$template: c.first || c.last ? "name" : "no-name",
-				...c
-			},
-			twitter: c.twitter ? {
-				$template: "twitter",
-				...c
-			} : null,
-			notes: c.notes ? {
-				$template: "notes",
-				...c
-			} : null
+			...c
 		}));
 	}
 }

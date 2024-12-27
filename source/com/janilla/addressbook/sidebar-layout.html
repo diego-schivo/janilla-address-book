@@ -24,20 +24,24 @@
 	</div>
 	<nav>
 		<!--${contacts}-->
-		<template id="no-contacts">
-			<p>
-				<i>No contacts</i>
-			</p>
-		</template>
 		<template id="contacts">
 			<ul>
 				<!--${items}-->
 			</ul>
 		</template>
-		<template id="contact-item">
+		<template id="no-contacts">
+			<p>
+				<i>No contacts</i>
+			</p>
+		</template>
+		<template id="item">
 			<li>
-				<a href="/contacts/${contact.id}">${contact.first} ${contact.last}</a>
+				<a href="/contacts/${id}"><!--${name}--></a>
 			</li>
+		</template>
+		<template id="name">${first} ${last}</template>
+		<template id="no-name">
+			<i>No Name</i>
 		</template>
 	</nav>
 </div>

@@ -38,10 +38,42 @@ export default class SidebarLayout extends SlottableElement {
 		this.attachShadow({ mode: "open" });
 	}
 
+	connectedCallback() {
+		// console.log("SidebarLayout.connectedCallback");
+		super.connectedCallback();
+		this.shadowRoot.addEventListener("submit", this.handleSubmit);
+	}
+
+	disconnectedCallback() {
+		// console.log("SidebarLayout.disconnectedCallback");
+		this.shadowRoot.removeEventListener("submit", this.handleSubmit);
+	}
+
+	handleSubmit = async event => {
+		console.log("SidebarLayout.handleSubmit", event);
+		const el = event.target.closest("#sidebar");
+		if (!el)
+			return;
+		event.preventDefault();
+		event.stopPropagation();
+		await fetch("/api/contacts", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({})
+		});
+		this.state = null;
+		this.requestUpdate();
+	}
+
 	async computeState() {
 		// console.log("SidebarLayout.computeState");
+		const csc = this.computeStateCalled;
+		if (!this.computeStateCalled) {
+			this.computeStateCalled = true;
+		}
 		try {
-			this.dispatchEvent(new CustomEvent("load-start", { bubbles: true }));
+			if (!csc)
+				this.dispatchEvent(new CustomEvent("load-start", { bubbles: true }));
 			const u = new URL("/api/contacts", location.href);
 			const q = this.dataset.query;
 			if (q)
@@ -51,7 +83,8 @@ export default class SidebarLayout extends SlottableElement {
 			history.replaceState(s, "");
 			return s;
 		} finally {
-			this.dispatchEvent(new CustomEvent("load-end", { bubbles: true }));
+			if (!csc)
+				this.dispatchEvent(new CustomEvent("load-end", { bubbles: true }));
 		}
 	}
 
@@ -62,11 +95,15 @@ export default class SidebarLayout extends SlottableElement {
 			return;
 		this.shadowRoot.appendChild(this.interpolateDom({
 			$template: "",
-			contacts: !cc.length ? { $template: "no-contacts" } : {
-				$template: "contacts",
+			contacts: {
+				$template: cc.length ? "contacts" : "no-contacts",
 				items: cc.map(x => ({
-					$template: "contact-item",
-					contact: x
+					$template: "item",
+					...x,
+					name: {
+						$template: x.first || x.last ? "name" : "no-name",
+						...x
+					}
 				}))
 			}
 		}));

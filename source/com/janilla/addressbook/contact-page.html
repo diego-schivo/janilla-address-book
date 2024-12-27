@@ -1,15 +1,15 @@
 <div id="contact">
 	<div>
 		<img
-			alt="${contact.first} ${contact.last} avatar"
-			src="${contact.avatar}"
+			alt="${first} ${last} avatar"
+			src="${avatar}"
 		/>
 	</div>
 
 	<div>
 		<h1>
 			<!--${name}-->
-			<template id="name">${contact.first} ${contact.last}</template>
+			<template id="name">${first} ${last}</template>
 			<template id="no-name">
 				<i>No Name</i>
 			</template>
@@ -20,16 +20,16 @@
 		<template id="twitter">
 			<p>
 				<a
-					href="https://twitter.com/${contact.twitter}"
+					href="https://twitter.com/${twitter}"
 				>
-					${contact.twitter}
+					${twitter}
 				</a>
 			</p>
 		</template>
 
 		<!--${notes}-->
 		<template id="notes">
-			<p>${contact.notes}</p>
+			<p>${notes}</p>
 		</template>
 
 		<div>
