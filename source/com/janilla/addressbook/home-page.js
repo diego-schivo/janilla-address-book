@@ -37,6 +37,15 @@ export default class HomePage extends SlottableElement {
 		super();
 	}
 
+	async computeState() {
+		// console.log("HomePage.computeState");
+		// await new Promise(r => setTimeout(r, 500));
+		const s = {};
+		history.replaceState(s, "");
+		dispatchEvent(new CustomEvent("popstate"));
+		return s;
+	}
+
 	renderState() {
 		// console.log("HomePage.renderState");
 		this.appendChild(this.interpolateDom());

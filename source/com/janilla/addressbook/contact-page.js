@@ -51,7 +51,7 @@ export default class ContactPage extends SlottableElement {
 	}
 
 	handleSubmit = async event => {
-		console.log("ContactPage.handleSubmit", event);
+		// console.log("ContactPage.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
 		const c = this.state.contact;
@@ -72,20 +72,22 @@ export default class ContactPage extends SlottableElement {
 	}
 
 	handleToggleFavorite = async event => {
-		console.log("ContactPage.handleToggleFavorite", event);
+		// console.log("ContactPage.handleToggleFavorite", event);
 		const c = this.state.contact;
 		c.favorite = event.detail.favorite;
+		this.requestUpdate();
 		await fetch(`/api/contacts/${c.id}/favorite`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(c.favorite)
 		});
 		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
-		this.requestUpdate();
 	}
 
 	async updateDisplay() {
 		// console.log("ContactPage.updateDisplay");
+		if (!this.dataset.id)
+			return;
 		const c = this.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;

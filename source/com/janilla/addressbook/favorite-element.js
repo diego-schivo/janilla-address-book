@@ -49,7 +49,7 @@ export default class FavoriteElement extends FlexibleElement {
 	}
 
 	handleSubmit = event => {
-		console.log("FavoriteButton.handleSubmit", event);
+		// console.log("FavoriteButton.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
 		const c = this.dataset.checked !== undefined;
@@ -66,7 +66,7 @@ export default class FavoriteElement extends FlexibleElement {
 		this.appendChild(this.interpolateDom({
 			$template: "",
 			label: c ? "Remove from favorites" : "Add to favorites",
-			value: !c,
+			value: (!c).toString(),
 			text: c ? "★" : "☆"
 		}));
 	}

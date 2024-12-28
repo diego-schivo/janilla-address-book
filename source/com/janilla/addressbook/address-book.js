@@ -23,16 +23,6 @@
  */
 import { UpdatableElement } from "./updatable-element.js";
 
-const updateElement = (element, active, more) => {
-	if (active) {
-		// console.log("updateElement", element);
-		element.setAttribute("slot", "content");
-	} else
-		element.removeAttribute("slot");
-	if (more)
-		more(element, active);
-}
-
 export default class AddressBook extends UpdatableElement {
 
 	loadCount = 0;
@@ -71,14 +61,14 @@ export default class AddressBook extends UpdatableElement {
 	}
 
 	handleLoadStart = () => {
-		console.log("AddressBook.handleLoadStart");
+		// console.log("AddressBook.handleLoadStart");
 		this.loadCount++;
 		this.shadowRoot.querySelector("#loading-splash").style.display = "";
 		this.shadowRoot.querySelector("slot").style.display = "none";
 	}
 
 	handleLoadEnd = () => {
-		console.log("AddressBook.handleLoadEnd");
+		// console.log("AddressBook.handleLoadEnd");
 		if (--this.loadCount === 0) {
 			this.shadowRoot.querySelector("#loading-splash").style.display = "none";
 			this.shadowRoot.querySelector("slot").style.display = "";
@@ -86,8 +76,8 @@ export default class AddressBook extends UpdatableElement {
 	}
 
 	handlePopState = event => {
-		console.log("AddressBook.handlePopState", event);
-		this.updateContent(event.state);
+		// console.log("AddressBook.handlePopState", event);
+		this.updateContent(event.state, event.state || history.state);
 		this.querySelector("sidebar-layout[slot]")?.requestUpdate();
 	}
 
@@ -107,8 +97,17 @@ export default class AddressBook extends UpdatableElement {
 		this.updateContent();
 	}
 
-	updateContent(state) {
+	updateContent(state, loaded) {
 		// console.log("AddressBook.updateContent");
+		const updateElement = (element, active, more) => {
+			if (active) {
+				if (!element.hasAttribute("slot") || loaded)
+					element.setAttribute("slot", loaded ? "content" : "next-content");
+			} else if (element.getAttribute("slot") === (loaded ? "content" : "next-content"))
+				element.removeAttribute("slot");
+			if (more)
+				more(element, active);
+		}
 		const lp = location.pathname;
 		updateElement(this.querySelector("sidebar-layout"), lp === "/" || lp.startsWith("/contacts/"));
 		updateElement(this.querySelector("home-page"), lp === "/");

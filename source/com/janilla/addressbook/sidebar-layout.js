@@ -56,7 +56,7 @@ export default class SidebarLayout extends SlottableElement {
 	}
 
 	handleSubmit = async event => {
-		console.log("SidebarLayout.handleSubmit", event);
+		// console.log("SidebarLayout.handleSubmit", event);
 		const el = event.target.closest("#sidebar");
 		if (!el)
 			return;
@@ -74,19 +74,19 @@ export default class SidebarLayout extends SlottableElement {
 	}
 
 	handleUpdateContact = async event => {
-		console.log("SidebarLayout.handleUpdateContact", event);
+		// console.log("SidebarLayout.handleUpdateContact", event);
 		this.state = null;
 		this.requestUpdate();
 	}
 
 	handleDeleteContact = async event => {
-		console.log("SidebarLayout.handleDeleteContact", event);
+		// console.log("SidebarLayout.handleDeleteContact", event);
 		this.state = null;
 		this.requestUpdate();
 	}
 
 	handleInput = async event => {
-		console.log("SidebarLayout.handleInput", event);
+		// console.log("SidebarLayout.handleInput", event);
 		const u = new URL(location.href);
 		u.searchParams.set("q", event.target.value);
 		history.replaceState(null, "", u.pathname + u.search);
@@ -107,10 +107,10 @@ export default class SidebarLayout extends SlottableElement {
 			const q = new URLSearchParams(location.search).get("q");
 			if (q)
 				u.searchParams.append("query", q);
-			const cc = await (await fetch(u)).json();
-			const s = { contacts: cc };
-			history.replaceState(s, "");
-			dispatchEvent(new CustomEvent("popstate"));
+			this.contacts = await (await fetch(u)).json();
+			const s = { contacts: this.contacts };
+			// history.replaceState(s, "");
+			// dispatchEvent(new CustomEvent("popstate"));
 			return s;
 		} finally {
 			if (!csc)
@@ -120,7 +120,6 @@ export default class SidebarLayout extends SlottableElement {
 
 	renderState() {
 		// console.log("SidebarLayout.renderState");
-		const cc = this.state?.contacts;
 		this.shadowRoot.appendChild(this.interpolateDom({
 			$template: "",
 			search: {
@@ -133,8 +132,8 @@ export default class SidebarLayout extends SlottableElement {
 				}
 			},
 			contacts: {
-				$template: cc?.length ? "contacts" : "no-contacts",
-				items: cc?.map(x => ({
+				$template: this.contacts?.length ? "contacts" : "no-contacts",
+				items: this.contacts?.map(x => ({
 					$template: "item",
 					...x,
 					class: x.id === history.state?.contact?.id ? "active"
@@ -142,7 +141,8 @@ export default class SidebarLayout extends SlottableElement {
 					name: {
 						$template: x.full ? "name" : "no-name",
 						...x
-					}
+					},
+					favorite: x.favorite ? { $template: "favorite" } : null
 				}))
 			},
 			detail: {

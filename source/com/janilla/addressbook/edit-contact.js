@@ -51,7 +51,7 @@ export default class EditContact extends SlottableElement {
 	}
 
 	handleSubmit = async event => {
-		console.log("EditContact.handleSubmit", event);
+		// console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
 		const c = this.state.contact;
@@ -66,7 +66,7 @@ export default class EditContact extends SlottableElement {
 	}
 
 	handleClick = async event => {
-		console.log("EditContact.handleClick", event);
+		// console.log("EditContact.handleClick", event);
 		if (!event.target.matches('[type="button"]'))
 			return;
 		event.stopPropagation();
@@ -74,7 +74,7 @@ export default class EditContact extends SlottableElement {
 	}
 
 	async updateDisplay() {
-		console.log("EditContact.updateDisplay");
+		// console.log("EditContact.updateDisplay");
 		const c = this.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;
@@ -82,7 +82,7 @@ export default class EditContact extends SlottableElement {
 	}
 
 	async computeState() {
-		console.log("EditContact.computeState");
+		// console.log("EditContact.computeState");
 		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 		const s = { contact: c };
 		history.replaceState(s, "");

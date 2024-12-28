@@ -38,13 +38,12 @@
 		</template>
 		<template id="item">
 			<li>
-				<a href="/contacts/${id}" class="${class}"><!--${name}--></a>
+				<a href="/contacts/${id}" class="${class}"><!--${name}--><!--${favorite}--></a>
 			</li>
 		</template>
 		<template id="name">${full}</template>
-		<template id="no-name">
-			<i>No Name</i>
-		</template>
+		<template id="no-name"><i>No Name</i></template>
+		<template id="favorite"><span>★</span></template>
 	</nav>
 </div>
 <div id="detail" class="${detail.class}">

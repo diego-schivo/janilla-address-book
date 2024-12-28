@@ -48,6 +48,15 @@ export default class AboutPage extends SlottableElement {
 		await super.updateDisplay();
 	}
 
+	async computeState() {
+		// console.log("AboutPage.computeState");
+		// await new Promise(r => setTimeout(r, 500));
+		const s = {};
+		history.replaceState(s, "");
+		dispatchEvent(new CustomEvent("popstate"));
+		return s;
+	}
+
 	renderState() {
 		// console.log("AboutPage.renderState");
 		if (!this.renderStateCalled) {
