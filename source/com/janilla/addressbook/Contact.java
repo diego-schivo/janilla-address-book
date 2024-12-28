@@ -32,7 +32,8 @@ import com.janilla.persistence.Store;
 
 @Store
 @Index(sort = "last")
-public record Contact(Long id, Instant createdAt, String avatar, String first, String last, String twitter) {
+public record Contact(Long id, Instant createdAt, String avatar, String first, String last, String twitter,
+		Boolean favorite) {
 
 	@Index
 	public String full() {
@@ -42,6 +43,10 @@ public record Contact(Long id, Instant createdAt, String avatar, String first, S
 	}
 
 	public Contact withCreatedAt(Instant createdAt) {
-		return new Contact(id, createdAt, avatar, first, last, twitter);
+		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
+	}
+
+	public Contact withFavorite(Boolean favorite) {
+		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
 	}
 }

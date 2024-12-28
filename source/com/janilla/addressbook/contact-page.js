@@ -41,11 +41,13 @@ export default class ContactPage extends SlottableElement {
 		// console.log("ContactPage.connectedCallback");
 		super.connectedCallback();
 		this.addEventListener("submit", this.handleSubmit);
+		this.addEventListener("toggle-favorite", this.handleToggleFavorite);
 	}
 
 	disconnectedCallback() {
 		// console.log("ContactPage.disconnectedCallback");
 		this.removeEventListener("submit", this.handleSubmit);
+		this.removeEventListener("toggle-favorite", this.handleToggleFavorite);
 	}
 
 	handleSubmit = async event => {
@@ -67,6 +69,19 @@ export default class ContactPage extends SlottableElement {
 				dispatchEvent(new CustomEvent("popstate"));
 				break;
 		}
+	}
+
+	handleToggleFavorite = async event => {
+		console.log("ContactPage.handleToggleFavorite", event);
+		const c = this.state.contact;
+		c.favorite = event.detail.favorite;
+		await fetch(`/api/contacts/${c.id}/favorite`, {
+			method: "PUT",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(c.favorite)
+		});
+		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
+		this.requestUpdate();
 	}
 
 	async updateDisplay() {
@@ -95,7 +110,7 @@ export default class ContactPage extends SlottableElement {
 			$template: "",
 			...c,
 			name: {
-				$template: c.first || c.last ? "name" : "no-name",
+				$template: c.full ? "name" : "no-name",
 				...c
 			},
 			twitter: c.twitter ? {

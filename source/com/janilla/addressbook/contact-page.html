@@ -1,7 +1,7 @@
 <div id="contact">
 	<div>
 		<img
-			alt="${first} ${last} avatar"
+			alt="${full} avatar"
 			src="${avatar}"
 		/>
 	</div>
@@ -9,11 +9,11 @@
 	<div>
 		<h1>
 			<!--${name}-->
-			<template id="name">${first} ${last}</template>
+			<template id="name">${full}</template>
 			<template id="no-name">
 				<i>No Name</i>
 			</template>
-			<favorite-x></favorite-x>
+			<favorite-element data-checked="${favorite}"></favorite-element>
 		</h1>
 
 		<!--${twitter}-->

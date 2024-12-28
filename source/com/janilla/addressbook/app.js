@@ -25,6 +25,7 @@ import AboutPage from "./about-page.js";
 import AddressBook from "./address-book.js";
 import ContactPage from "./contact-page.js";
 import EditContact from "./edit-contact.js";
+import FavoriteElement from "./favorite-element.js";
 import HomePage from "./home-page.js";
 import SidebarLayout from "./sidebar-layout.js";
 
@@ -32,5 +33,6 @@ customElements.define("about-page", AboutPage);
 customElements.define("address-book", AddressBook);
 customElements.define("contact-page", ContactPage);
 customElements.define("edit-contact", EditContact);
+customElements.define("favorite-element", FavoriteElement);
 customElements.define("home-page", HomePage);
 customElements.define("sidebar-layout", SidebarLayout);

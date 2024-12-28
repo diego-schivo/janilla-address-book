@@ -140,7 +140,7 @@ export default class SidebarLayout extends SlottableElement {
 					class: x.id === history.state?.contact?.id ? "active"
 						: `${location.pathname}/`.startsWith(`/contacts/${x.id}/`) ? "pending" : null,
 					name: {
-						$template: x.first || x.last ? "name" : "no-name",
+						$template: x.full ? "name" : "no-name",
 						...x
 					}
 				}))

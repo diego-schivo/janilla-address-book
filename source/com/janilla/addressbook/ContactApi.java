@@ -72,4 +72,9 @@ public class ContactApi {
 	public Contact delete(long id) {
 		return persistence.crud(Contact.class).delete(id);
 	}
+
+	@Handle(method = "PUT", path = "/api/contacts/(\\d+)/favorite")
+	public Contact favorite(long id, Boolean value) {
+		return persistence.crud(Contact.class).update(id, x -> x.withFavorite(value));
+	}
 }

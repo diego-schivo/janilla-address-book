@@ -24,6 +24,7 @@
 package com.janilla.addressbook;
 
 import java.nio.file.Files;
+import java.time.Instant;
 
 import com.janilla.persistence.ApplicationPersistenceBuilder;
 import com.janilla.persistence.Persistence;
@@ -48,6 +49,6 @@ public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
 
 	void seed(Persistence persistence) {
 		var fd = FakeData.INSTANCE;
-		fd.contacts().forEach(persistence.crud(Contact.class)::create);
+		fd.contacts().forEach(x -> persistence.crud(Contact.class).create(x.withCreatedAt(Instant.now())));
 	}
 }
