@@ -24,9 +24,7 @@
 package com.janilla.addressbook;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.janilla.persistence.Persistence;
@@ -41,12 +39,17 @@ public class ContactApi {
 	@Handle(method = "GET", path = "/api/contacts")
 	public Stream<Contact> list(@Bind("query") String query) {
 		var cc = persistence.crud(Contact.class);
-		var q = query != null && !query.isEmpty() ? query.toLowerCase().chars().distinct()
-				.mapToObj(x -> String.valueOf((char) x)).collect(Collectors.toCollection(HashSet::new)) : null;
-		return cc.read(q == null ? cc.list() : cc.filter("last", x -> {
+		var qcc = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
+		return cc.read(qcc != null ? cc.filter("full", x -> {
 			var s = ((String) x).toLowerCase();
-			return q.stream().allMatch(s::contains);
-		}));
+			var i = -1;
+			for (var c : qcc) {
+				i = s.indexOf(c, i + 1);
+				if (i == -1)
+					return false;
+			}
+			return true;
+		}) : cc.list());
 	}
 
 	@Handle(method = "POST", path = "/api/contacts")

@@ -7,15 +7,16 @@
 		<form id="search-form" role="search">
 			<input
 				aria-label="Search contacts"
+				class="${search.input.class}"
+				value="${search.input.value}"
 				id="q"
 				name="q"
 				placeholder="Search"
 				type="search"
-				value="${q}"
 			/>
 			<div
 				aria-hidden
-				hidden
+				hidden="${search.spinner.hidden}"
 				id="search-spinner">
 			</div>
 		</form>
@@ -46,6 +47,6 @@
 		</template>
 	</nav>
 </div>
-<div id="detail" class="${detailClass}">
+<div id="detail" class="${detail.class}">
 	<slot name="content"></slot>
 </div>

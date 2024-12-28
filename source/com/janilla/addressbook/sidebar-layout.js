@@ -121,14 +121,20 @@ export default class SidebarLayout extends SlottableElement {
 	renderState() {
 		// console.log("SidebarLayout.renderState");
 		const cc = this.state?.contacts;
-		if (!cc)
-			return;
 		this.shadowRoot.appendChild(this.interpolateDom({
 			$template: "",
-			q: new URL(location.href).searchParams.get("q"),
+			search: {
+				input: {
+					class: !history.state ? "loading" : null,
+					value: new URLSearchParams(location.search).get("q")
+				},
+				spinner: {
+					hidden: !!history.state
+				}
+			},
 			contacts: {
-				$template: cc.length ? "contacts" : "no-contacts",
-				items: cc.map(x => ({
+				$template: cc?.length ? "contacts" : "no-contacts",
+				items: cc?.map(x => ({
 					$template: "item",
 					...x,
 					class: x.id === history.state?.contact?.id ? "active"
@@ -139,7 +145,9 @@ export default class SidebarLayout extends SlottableElement {
 					}
 				}))
 			},
-			detailClass: !history.state ? "loading" : null
+			detail: {
+				class: !history.state && !new URLSearchParams(location.search).has("q") ? "loading" : null
+			}
 		}));
 	}
 }
