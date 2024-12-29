@@ -56,10 +56,6 @@ export default class AddressBook extends UpdatableElement {
 
 	handlePopState = event => {
 		// console.log("AddressBook.handlePopState", event);
-		if (history.state?.contacts) {
-			this.shadowRoot.querySelector("#loading-splash").style.display = "none";
-			this.shadowRoot.querySelector("slot").style.display = "";
-		}
 		this.updateContent(event.state);
 		this.querySelector('sidebar-layout[slot="content"]')?.requestUpdate();
 	}
@@ -68,16 +64,11 @@ export default class AddressBook extends UpdatableElement {
 		// console.log("AddressBook.updateDisplay");
 		if (!this.shadowRoot.firstChild) {
 			this.shadowRoot.innerHTML = `<link href="/app.css" rel="stylesheet" />
-<div id="loading-splash" style="display: none">
-	<div id="loading-splash-spinner"></div>
-	<p>Loading, please wait...</p>
-</div>
 <slot name="content"></slot>`;
 			if (this.querySelector(':scope > [slot="content"]'))
 				return;
-			this.shadowRoot.querySelector("#loading-splash").style.display = "";
-			this.shadowRoot.querySelector("slot").style.display = "none";
 		}
+		this.querySelector("#loading-splash").setAttribute("slot", "content");
 		this.updateContent();
 	}
 
