@@ -75,12 +75,19 @@ export default class AddressBook extends UpdatableElement {
 	updateContent(state) {
 		// console.log("AddressBook.updateContent");
 		const updateElement = (element, active, more) => {
-			if (active && element.slot !== "content") {
-				const el = element.state != null
-					? Array.prototype.find.call(element.parentNode.childNodes, x => x !== element && x.slot === "content")
-					: null;
-				el?.removeAttribute("slot");
-				element.setAttribute("slot", element.state == null ? "new-content" : "content");
+			if (active) {
+				if (state != null)
+					element.state = state;
+				if (element.slot === "content") {
+					if (state != null)
+						element.requestUpdate();
+				} else {
+					const el = element.state != null
+						? Array.prototype.find.call(element.parentNode.childNodes, x => x !== element && x.slot === "content")
+						: null;
+					el?.removeAttribute("slot");
+					element.setAttribute("slot", element.state == null ? "new-content" : "content");
+				}
 			}
 			if (more)
 				more(element, active);
@@ -90,14 +97,12 @@ export default class AddressBook extends UpdatableElement {
 		updateElement(this.querySelector("home-page"), lp === "/");
 		const m = lp.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
 		updateElement(this.querySelector("contact-page"), m[1] && !m[2], (el, a) => {
-			// el.state = a ? state : undefined;
 			if (a)
 				el.setAttribute("data-id", m[1]);
 			else
 				el.removeAttribute("data-id");
 		});
 		updateElement(this.querySelector("edit-contact"), m[1] && m[2], (el, a) => {
-			// el.state = a ? state : undefined;
 			if (a)
 				el.setAttribute("data-id", m[1]);
 			else
