@@ -23,14 +23,14 @@
  */
 import { FlexibleElement } from "./flexible-element.js";
 
-export default class FavoriteElement extends FlexibleElement {
+export default class ToggleFavorite extends FlexibleElement {
 
 	static get observedAttributes() {
 		return ["data-checked"];
 	}
 
 	static get templateName() {
-		return "favorite-element";
+		return "toggle-favorite";
 	}
 
 	constructor() {

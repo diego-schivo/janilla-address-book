@@ -25,8 +25,6 @@ import { UpdatableElement } from "./updatable-element.js";
 
 export default class AddressBook extends UpdatableElement {
 
-	loadCount = 0;
-
 	constructor() {
 		super();
 		this.attachShadow({ mode: "open" });
@@ -37,16 +35,12 @@ export default class AddressBook extends UpdatableElement {
 		super.connectedCallback();
 		addEventListener("popstate", this.handlePopState);
 		this.addEventListener("click", this.handleClick);
-		this.addEventListener("load-start", this.handleLoadStart);
-		this.addEventListener("load-end", this.handleLoadEnd);
 	}
 
 	disconnectedCallback() {
 		// console.log("AddressBook.disconnectedCallback");
 		removeEventListener("popstate", this.handlePopState);
 		this.removeEventListener("click", this.handleClick);
-		this.removeEventListener("load-start", this.handleLoadStart);
-		this.removeEventListener("load-end", this.handleLoadEnd);
 	}
 
 	handleClick = event => {
@@ -56,55 +50,47 @@ export default class AddressBook extends UpdatableElement {
 			return;
 		event.preventDefault();
 		const u = new URL(a.href);
-		history.pushState(null, "", u.pathname + u.search);
+		history.pushState({ contacts: history.state?.contacts }, "", u.pathname + u.search);
 		dispatchEvent(new CustomEvent("popstate"));
-	}
-
-	handleLoadStart = () => {
-		// console.log("AddressBook.handleLoadStart");
-		this.loadCount++;
-		this.shadowRoot.querySelector("#loading-splash").style.display = "";
-		this.shadowRoot.querySelector("slot").style.display = "none";
-	}
-
-	handleLoadEnd = () => {
-		// console.log("AddressBook.handleLoadEnd");
-		if (--this.loadCount === 0) {
-			this.shadowRoot.querySelector("#loading-splash").style.display = "none";
-			this.shadowRoot.querySelector("slot").style.display = "";
-		}
 	}
 
 	handlePopState = event => {
 		// console.log("AddressBook.handlePopState", event);
-		this.updateContent(event.state, event.state || history.state);
-		this.querySelector("sidebar-layout[slot]")?.requestUpdate();
+		if (history.state?.contacts) {
+			this.shadowRoot.querySelector("#loading-splash").style.display = "none";
+			this.shadowRoot.querySelector("slot").style.display = "";
+		}
+		this.updateContent(event.state);
+		this.querySelector('sidebar-layout[slot="content"]')?.requestUpdate();
 	}
 
 	async updateDisplay() {
 		// console.log("AddressBook.updateDisplay");
-		this.shadowRoot.innerHTML = `<link href="/app.css" rel="stylesheet" />
+		if (!this.shadowRoot.firstChild) {
+			this.shadowRoot.innerHTML = `<link href="/app.css" rel="stylesheet" />
 <div id="loading-splash" style="display: none">
 	<div id="loading-splash-spinner"></div>
 	<p>Loading, please wait...</p>
 </div>
 <slot name="content"></slot>`;
-		if (!this.updateDisplayCalled) {
-			this.updateDisplayCalled = true;
-			if (this.querySelector("[slot]"))
+			if (this.querySelector(':scope > [slot="content"]'))
 				return;
+			this.shadowRoot.querySelector("#loading-splash").style.display = "";
+			this.shadowRoot.querySelector("slot").style.display = "none";
 		}
 		this.updateContent();
 	}
 
-	updateContent(state, loaded) {
+	updateContent(state) {
 		// console.log("AddressBook.updateContent");
 		const updateElement = (element, active, more) => {
-			if (active) {
-				if (!element.hasAttribute("slot") || loaded)
-					element.setAttribute("slot", loaded ? "content" : "next-content");
-			} else if (element.getAttribute("slot") === (loaded ? "content" : "next-content"))
-				element.removeAttribute("slot");
+			if (active && element.slot !== "content") {
+				const el = element.state != null
+					? Array.prototype.find.call(element.parentNode.childNodes, x => x !== element && x.slot === "content")
+					: null;
+				el?.removeAttribute("slot");
+				element.setAttribute("slot", element.state == null ? "new-content" : "content");
+			}
 			if (more)
 				more(element, active);
 		}
@@ -113,14 +99,14 @@ export default class AddressBook extends UpdatableElement {
 		updateElement(this.querySelector("home-page"), lp === "/");
 		const m = lp.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
 		updateElement(this.querySelector("contact-page"), m[1] && !m[2], (el, a) => {
-			el.state = a ? state : undefined;
+			// el.state = a ? state : undefined;
 			if (a)
 				el.setAttribute("data-id", m[1]);
 			else
 				el.removeAttribute("data-id");
 		});
 		updateElement(this.querySelector("edit-contact"), m[1] && m[2], (el, a) => {
-			el.state = a ? state : undefined;
+			// el.state = a ? state : undefined;
 			if (a)
 				el.setAttribute("data-id", m[1]);
 			else

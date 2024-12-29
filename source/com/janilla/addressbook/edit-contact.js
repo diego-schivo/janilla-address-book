@@ -84,10 +84,12 @@ export default class EditContact extends SlottableElement {
 	async computeState() {
 		// console.log("EditContact.computeState");
 		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-		const s = { contact: c };
-		history.replaceState(s, "");
+		this.state = { contact: c };
+		history.replaceState({
+			contacts: history.state?.contacts,
+			...this.state
+		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
-		return s;
 	}
 
 	renderState() {

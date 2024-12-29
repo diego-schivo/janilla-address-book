@@ -96,26 +96,17 @@ export default class SidebarLayout extends SlottableElement {
 
 	async computeState() {
 		// console.log("SidebarLayout.computeState");
-		const csc = this.computeStateCalled;
-		if (!this.computeStateCalled) {
-			this.computeStateCalled = true;
-		}
-		try {
-			if (!csc)
-				this.dispatchEvent(new CustomEvent("load-start", { bubbles: true }));
-			const u = new URL("/api/contacts", location.href);
-			const q = new URLSearchParams(location.search).get("q");
-			if (q)
-				u.searchParams.append("query", q);
-			this.contacts = await (await fetch(u)).json();
-			const s = { contacts: this.contacts };
-			// history.replaceState(s, "");
-			// dispatchEvent(new CustomEvent("popstate"));
-			return s;
-		} finally {
-			if (!csc)
-				this.dispatchEvent(new CustomEvent("load-end", { bubbles: true }));
-		}
+		const u = new URL("/api/contacts", location.href);
+		const q = new URLSearchParams(location.search).get("q");
+		if (q)
+			u.searchParams.append("query", q);
+		this.contacts = await (await fetch(u)).json();
+		this.state = { contacts: this.contacts };
+		history.replaceState({
+			...history.state,
+			...this.state
+		}, "");
+		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	renderState() {
@@ -146,7 +137,7 @@ export default class SidebarLayout extends SlottableElement {
 				}))
 			},
 			detail: {
-				class: !history.state && !new URLSearchParams(location.search).has("q") ? "loading" : null
+				class: this.querySelector(":scope > [data-compute-state]") ? "loading" : null
 			}
 		}));
 	}

@@ -81,6 +81,11 @@ export default class ContactPage extends SlottableElement {
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(c.favorite)
 		});
+		history.replaceState({
+			contacts: history.state?.contacts,
+			...this.state
+		}, "");
+		dispatchEvent(new CustomEvent("popstate"));
 		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
 	}
 
@@ -97,10 +102,12 @@ export default class ContactPage extends SlottableElement {
 	async computeState() {
 		// console.log("ContactPage.computeState");
 		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-		const s = { contact: c };
-		history.replaceState(s, "");
+		this.state = { contact: c };
+		history.replaceState({
+			contacts: history.state?.contacts,
+			...this.state
+		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
-		return s;
 	}
 
 	renderState() {
