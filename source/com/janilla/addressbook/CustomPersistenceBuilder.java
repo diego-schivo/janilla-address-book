@@ -35,20 +35,8 @@ public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
 	public Persistence build() {
 		var fe = Files.exists(file);
 		var p = super.build();
-		p.setTypeResolver(x -> {
-			try {
-				return Class.forName(AddressBook.class.getPackageName() + "." + x.replace('.', '$'));
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-		});
 		if (!fe)
-			seed(p);
+			FakeData.INSTANCE.contacts().forEach(x -> p.crud(Contact.class).create(x.withCreatedAt(Instant.now())));
 		return p;
-	}
-
-	void seed(Persistence persistence) {
-		var fd = FakeData.INSTANCE;
-		fd.contacts().forEach(x -> persistence.crud(Contact.class).create(x.withCreatedAt(Instant.now())));
 	}
 }

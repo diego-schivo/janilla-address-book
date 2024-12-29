@@ -38,31 +38,25 @@ export default class AboutPage extends SlottableElement {
 		super();
 	}
 
-	async updateDisplay() {
-		// console.log("AboutPage.updateDisplay");
-		if (!this.updateDisplayCalled) {
-			this.updateDisplayCalled = true;
-			if (this.matches("[slot]"))
-				return;
-		}
-		await super.updateDisplay();
+	connectedCallback() {
+		// console.log("AboutPage.connectedCallback");
+		if (this.dataset.ssr !== undefined)
+			return;
+		super.connectedCallback();
 	}
 
 	async computeState() {
 		// console.log("AboutPage.computeState");
 		// await new Promise(r => setTimeout(r, 500));
-		this.state = {};
-		history.replaceState({
-			contacts: history.state?.contacts,
-			...this.state
-		}, "");
+		await super.computeState();
+		history.replaceState(this.state, "");
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	renderState() {
 		// console.log("AboutPage.renderState");
-		if (!this.renderStateCalled) {
-			this.renderStateCalled = true;
+		if (this.dataset.ssr !== undefined) {
+			delete this.dataset.ssr;
 			removeAllChildren(this);
 		}
 		this.appendChild(this.interpolateDom());

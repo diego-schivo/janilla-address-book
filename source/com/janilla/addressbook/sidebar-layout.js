@@ -41,6 +41,7 @@ export default class SidebarLayout extends SlottableElement {
 	connectedCallback() {
 		// console.log("SidebarLayout.connectedCallback");
 		super.connectedCallback();
+		addEventListener("popstate", this.handlePopState);
 		this.shadowRoot.addEventListener("submit", this.handleSubmit);
 		this.shadowRoot.addEventListener("update-contact", this.handleUpdateContact);
 		this.shadowRoot.addEventListener("delete-contact", this.handleDeleteContact);
@@ -49,10 +50,16 @@ export default class SidebarLayout extends SlottableElement {
 
 	disconnectedCallback() {
 		// console.log("SidebarLayout.disconnectedCallback");
+		removeEventListener("popstate", this.handlePopState);
 		this.shadowRoot.removeEventListener("submit", this.handleSubmit);
 		this.shadowRoot.removeEventListener("update-contact", this.handleUpdateContact);
 		this.shadowRoot.removeEventListener("delete-contact", this.handleDeleteContact);
 		this.shadowRoot.removeEventListener("input", this.handleInput);
+	}
+
+	handlePopState = event => {
+		// console.log("SidebarLayout.handlePopState", event);
+		this.requestUpdate();
 	}
 
 	handleSubmit = async event => {

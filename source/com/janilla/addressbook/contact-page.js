@@ -57,15 +57,18 @@ export default class ContactPage extends SlottableElement {
 		const c = this.state.contact;
 		switch (event.target.method) {
 			case "get":
-				history.pushState(null, "", `/contacts/${c.id}/edit`);
+				history.pushState({ contacts: history.state.contacts }, "", `/contacts/${c.id}/edit`);
 				dispatchEvent(new CustomEvent("popstate"));
 				break;
 			case "post":
 				if (!confirm("Please confirm you want to delete this record."))
 					return;
-				await fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
-				this.dispatchEvent(new CustomEvent("delete-contact", { bubbles: true }));
-				history.pushState(null, "", "/");
+				const c2 = await (await fetch(`/api/contacts/${c.id}`, { method: "DELETE" })).json();
+				this.dispatchEvent(new CustomEvent("delete-contact", {
+					bubbles: true,
+					detail: { contact: c2 }
+				}));
+				history.pushState({ contacts: history.state.contacts }, "", "/");
 				dispatchEvent(new CustomEvent("popstate"));
 				break;
 		}
@@ -76,17 +79,21 @@ export default class ContactPage extends SlottableElement {
 		const c = this.state.contact;
 		c.favorite = event.detail.favorite;
 		this.requestUpdate();
-		await fetch(`/api/contacts/${c.id}/favorite`, {
+		const c2 = await (await fetch(`/api/contacts/${c.id}/favorite`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(c.favorite)
-		});
+		})).json();
+		this.state = { contact: c2 };
 		history.replaceState({
-			contacts: history.state?.contacts,
+			contacts: history.state.contacts,
 			...this.state
 		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
-		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
+		this.dispatchEvent(new CustomEvent("update-contact", {
+			bubbles: true,
+			detail: { contact: c2 }
+		}));
 	}
 
 	async updateDisplay() {

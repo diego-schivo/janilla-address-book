@@ -23,29 +23,14 @@
  */
 package com.janilla.addressbook;
 
-import java.util.Properties;
+import com.janilla.web.Error;
 
-import com.janilla.http.HttpExchange;
-import com.janilla.web.HandleException;
-import com.janilla.web.MethodHandlerFactory;
+@Error(code = 403, text = "Forbidden")
+public class MethodBlockedException extends RuntimeException {
 
-public class CustomMethodHandlerFactory extends MethodHandlerFactory {
+	private static final long serialVersionUID = -7370515482861976382L;
 
-	public Properties configuration;
-
-	@Override
-	protected void handle(Invocation invocation, HttpExchange exchange) {
-		var rq = exchange.getRequest();
-		if (Boolean.parseBoolean(configuration.getProperty("address-book.live-demo")) && !rq.getMethod().equals("GET"))
-			throw new HandleException(new MethodBlockedException());
-
-//		if (exchange.getRequest().getPath().startsWith("/api"))
-//			try {
-//				Thread.sleep(500);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-
-		super.handle(invocation, exchange);
+	public MethodBlockedException() {
+		super("The requested action is disabled on this public server: please set up and run the application locally");
 	}
 }

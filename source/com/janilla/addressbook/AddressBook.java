@@ -68,7 +68,7 @@ public class AddressBook {
 			hp.setHandler(a.handler);
 			var s = new Server();
 			s.setAddress(
-					new InetSocketAddress(Integer.parseInt(a.configuration.getProperty("addressbook.server.port"))));
+					new InetSocketAddress(Integer.parseInt(a.configuration.getProperty("address-book.server.port"))));
 			s.setProtocol(hp);
 			s.serve();
 		} catch (Throwable e) {
@@ -92,7 +92,7 @@ public class AddressBook {
 		handler = factory.create(ApplicationHandlerBuilder.class).build();
 		{
 			var pb = factory.create(ApplicationPersistenceBuilder.class);
-			var p = configuration.getProperty("addressbook.database.file");
+			var p = configuration.getProperty("address-book.database.file");
 			if (p.startsWith("~"))
 				p = System.getProperty("user.home") + p.substring(1);
 			pb.setFile(Path.of(p));
@@ -106,7 +106,7 @@ public class AddressBook {
 
 	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
 	public Index index(String path) {
-		return new Index(path.equals("/about") ? new About("content", new Content()) : new About(false, null));
+		return new Index(new About(path.equals("/about") ? new Content() : null));
 	}
 
 	@Render(template = "index.html")
@@ -114,7 +114,15 @@ public class AddressBook {
 	}
 
 	@Render(template = "about")
-	public record About(Object slot, @Render(template = "about-page.html") Content content) {
+	public record About(@Render(template = "about-page.html") Content content) {
+
+		public Object slot() {
+			return content != null ? "content" : false;
+		}
+
+		public boolean ssr() {
+			return content != null;
+		}
 	}
 
 	public record Content() {
