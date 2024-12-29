@@ -55,13 +55,16 @@ export default class EditContact extends SlottableElement {
 		event.preventDefault();
 		event.stopPropagation();
 		const c = this.state.contact;
-		await fetch(`/api/contacts/${this.state.contact.id}`, {
+		const c2 = await (await fetch(`/api/contacts/${c.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
-		});
-		this.dispatchEvent(new CustomEvent("update-contact", { bubbles: true }));
-		history.pushState(null, "", `/contacts/${c.id}`);
+		})).json();
+		this.dispatchEvent(new CustomEvent("update-contact", {
+			bubbles: true,
+			detail: { contact: c2 }
+		}));
+		history.pushState({ contacts: history.state.contacts }, "", `/contacts/${c.id}`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
@@ -75,6 +78,8 @@ export default class EditContact extends SlottableElement {
 
 	async updateDisplay() {
 		// console.log("EditContact.updateDisplay");
+		if (!this.dataset.id)
+			return;
 		const c = this.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
 			this.state = null;

@@ -55,8 +55,7 @@ export default class AddressBook extends UpdatableElement {
 			return;
 		event.preventDefault();
 		const u = new URL(a.href);
-		const cc = history.state?.contacts;
-		history.pushState(cc ? { contacts: cc } : null, "", u.pathname + u.search);
+		history.pushState({ contacts: history.state?.contacts }, "", u.pathname + u.search);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 

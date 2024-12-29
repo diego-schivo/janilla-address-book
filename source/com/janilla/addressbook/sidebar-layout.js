@@ -75,7 +75,6 @@ export default class SidebarLayout extends SlottableElement {
 			body: JSON.stringify({})
 		})).json();
 		this.state = null;
-		this.requestUpdate();
 		history.pushState(null, "", `/contacts/${c.id}/edit`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
@@ -94,11 +93,19 @@ export default class SidebarLayout extends SlottableElement {
 
 	handleInput = async event => {
 		// console.log("SidebarLayout.handleInput", event);
-		const u = new URL(location.href);
-		u.searchParams.set("q", event.target.value);
-		history.replaceState(null, "", u.pathname + u.search);
+		const el = event.target.closest("#sidebar");
+		if (!el)
+			return;
+		const q1 = new URLSearchParams(location.search).get("q");
+		const q2 = event.target.value;
 		this.state = null;
-		this.requestUpdate();
+		const u = new URL(location.href);
+		u.searchParams.set("q", q2);
+		if (q1 === null)
+			history.pushState(null, "", u.pathname + u.search);
+		else
+			history.replaceState(null, "", u.pathname + u.search);
+		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	async computeState() {
