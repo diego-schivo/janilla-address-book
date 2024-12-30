@@ -74,20 +74,20 @@ export default class SidebarLayout extends SlottableElement {
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify({})
 		})).json();
-		this.state = null;
+		this.janillas.state = undefined;
 		history.pushState(null, "", `/contacts/${c.id}/edit`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	handleUpdateContact = async event => {
 		// console.log("SidebarLayout.handleUpdateContact", event);
-		this.state = null;
+		this.janillas.state = undefined;
 		this.requestUpdate();
 	}
 
 	handleDeleteContact = async event => {
 		// console.log("SidebarLayout.handleDeleteContact", event);
-		this.state = null;
+		this.janillas.state = undefined;
 		this.requestUpdate();
 	}
 
@@ -98,10 +98,10 @@ export default class SidebarLayout extends SlottableElement {
 			return;
 		const q1 = new URLSearchParams(location.search).get("q");
 		const q2 = event.target.value;
-		this.state = null;
+		this.janillas.state = undefined;
 		const u = new URL(location.href);
 		u.searchParams.set("q", q2);
-		if (q1 === null)
+		if (!q1)
 			history.pushState(null, "", u.pathname + u.search);
 		else
 			history.replaceState(null, "", u.pathname + u.search);
@@ -115,10 +115,10 @@ export default class SidebarLayout extends SlottableElement {
 		if (q)
 			u.searchParams.append("query", q);
 		this.contacts = await (await fetch(u)).json();
-		this.state = { contacts: this.contacts };
+		this.janillas.state = { contacts: this.contacts };
 		history.replaceState({
 			...history.state,
-			...this.state
+			...this.janillas.state
 		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
 	}

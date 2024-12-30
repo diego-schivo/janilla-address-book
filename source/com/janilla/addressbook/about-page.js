@@ -49,7 +49,7 @@ export default class AboutPage extends SlottableElement {
 		// console.log("AboutPage.computeState");
 		// await new Promise(r => setTimeout(r, 500));
 		await super.computeState();
-		history.replaceState(this.state, "");
+		history.replaceState(this.janillas.state, "");
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 

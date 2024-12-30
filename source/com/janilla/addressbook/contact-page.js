@@ -54,7 +54,7 @@ export default class ContactPage extends SlottableElement {
 		// console.log("ContactPage.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const c = this.state.contact;
+		const c = this.janillas.state.contact;
 		switch (event.target.method) {
 			case "get":
 				history.pushState({ contacts: history.state.contacts }, "", `/contacts/${c.id}/edit`);
@@ -76,7 +76,7 @@ export default class ContactPage extends SlottableElement {
 
 	handleToggleFavorite = async event => {
 		// console.log("ContactPage.handleToggleFavorite", event);
-		const c = this.state.contact;
+		const c = this.janillas.state.contact;
 		c.favorite = event.detail.favorite;
 		this.requestUpdate();
 		const c2 = await (await fetch(`/api/contacts/${c.id}/favorite`, {
@@ -84,10 +84,10 @@ export default class ContactPage extends SlottableElement {
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(c.favorite)
 		})).json();
-		this.state = { contact: c2 };
+		this.janillas.state = { contact: c2 };
 		history.replaceState({
 			contacts: history.state.contacts,
-			...this.state
+			...this.janillas.state
 		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
 		this.dispatchEvent(new CustomEvent("update-contact", {
@@ -100,26 +100,26 @@ export default class ContactPage extends SlottableElement {
 		// console.log("ContactPage.updateDisplay");
 		if (!this.dataset.id)
 			return;
-		const c = this.state?.contact;
+		const c = this.janillas.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
-			this.state = null;
+			this.janillas.state = undefined;
 		await super.updateDisplay();
 	}
 
 	async computeState() {
 		// console.log("ContactPage.computeState");
 		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-		this.state = { contact: c };
+		this.janillas.state = { contact: c };
 		history.replaceState({
 			contacts: history.state?.contacts,
-			...this.state
+			...this.janillas.state
 		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	renderState() {
 		// console.log("ContactPage.renderState");
-		const c = this.state?.contact;
+		const c = this.janillas.state?.contact;
 		if (!c)
 			return;
 		this.appendChild(this.interpolateDom({

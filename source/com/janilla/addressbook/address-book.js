@@ -74,16 +74,16 @@ export default class AddressBook extends UpdatableElement {
 		const updateElement = (element, active, more) => {
 			if (active) {
 				if (state)
-					element.state = state;
+					element.janillas.state = state;
 				if (element.slot === "content") {
 					if (state)
 						element.requestUpdate();
 				} else {
-					const el = element.state
+					const el = element.janillas.state
 						? Array.prototype.find.call(element.parentNode.childNodes, x => x !== element && x.slot === "content")
 						: null;
 					el?.removeAttribute("slot");
-					element.setAttribute("slot", element.state ? "content" : "new-content");
+					element.setAttribute("slot", element.janillas.state ? "content" : "new-content");
 				}
 			}
 			if (more)

@@ -54,7 +54,7 @@ export default class EditContact extends SlottableElement {
 		// console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const c = this.state.contact;
+		const c = this.janillas.state.contact;
 		const c2 = await (await fetch(`/api/contacts/${c.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
@@ -80,26 +80,26 @@ export default class EditContact extends SlottableElement {
 		// console.log("EditContact.updateDisplay");
 		if (!this.dataset.id)
 			return;
-		const c = this.state?.contact;
+		const c = this.janillas.state?.contact;
 		if (this.dataset.id !== c?.id?.toString())
-			this.state = null;
+			this.janillas.state = undefined;
 		await super.updateDisplay();
 	}
 
 	async computeState() {
 		// console.log("EditContact.computeState");
 		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-		this.state = { contact: c };
+		this.janillas.state = { contact: c };
 		history.replaceState({
 			contacts: history.state?.contacts,
-			...this.state
+			...this.janillas.state
 		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	renderState() {
 		// console.log("EditContact.renderState");
-		const c = this.state?.contact;
+		const c = this.janillas.state?.contact;
 		if (!c)
 			return;
 		this.appendChild(this.interpolateDom({

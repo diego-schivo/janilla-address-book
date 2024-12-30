@@ -61,7 +61,6 @@ export default class ToggleFavorite extends FlexibleElement {
 
 	async updateDisplay() {
 		// console.log("FavoriteButton.updateDisplay");
-		await super.updateDisplay();
 		const c = this.dataset.checked !== undefined;
 		this.appendChild(this.interpolateDom({
 			$template: "",
