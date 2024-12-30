@@ -31,6 +31,7 @@ import com.janilla.persistence.Persistence;
 import com.janilla.reflect.Reflection;
 import com.janilla.web.Bind;
 import com.janilla.web.Handle;
+import com.janilla.web.NotFoundException;
 
 public class ContactApi {
 
@@ -59,22 +60,34 @@ public class ContactApi {
 
 	@Handle(method = "GET", path = "/api/contacts/(\\d+)")
 	public Contact read(long id) {
-		return persistence.crud(Contact.class).read(id);
+		var c = persistence.crud(Contact.class).read(id);
+		if (c == null)
+			throw new NotFoundException("contact " + id);
+		return c;
 	}
 
 	@Handle(method = "PUT", path = "/api/contacts/(\\d+)")
 	public Contact update(long id, Contact contact) {
-		return persistence.crud(Contact.class).update(id,
+		var c = persistence.crud(Contact.class).update(id,
 				x -> Reflection.copy(contact, x, y -> !Set.of("id", "createdAt").contains(y)));
+		if (c == null)
+			throw new NotFoundException("contact " + id);
+		return c;
 	}
 
 	@Handle(method = "DELETE", path = "/api/contacts/(\\d+)")
 	public Contact delete(long id) {
-		return persistence.crud(Contact.class).delete(id);
+		var c = persistence.crud(Contact.class).delete(id);
+		if (c == null)
+			throw new NotFoundException("contact " + id);
+		return c;
 	}
 
 	@Handle(method = "PUT", path = "/api/contacts/(\\d+)/favorite")
 	public Contact favorite(long id, Boolean value) {
-		return persistence.crud(Contact.class).update(id, x -> x.withFavorite(value));
+		var c = persistence.crud(Contact.class).update(id, x -> x.withFavorite(value));
+		if (c == null)
+			throw new NotFoundException("contact " + id);
+		return c;
 	}
 }
