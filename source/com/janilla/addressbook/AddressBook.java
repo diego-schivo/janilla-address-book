@@ -106,7 +106,10 @@ public class AddressBook {
 
 	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
 	public Index index(String path) {
-		return new Index(new About(path.equals("/about") ? new Content() : null));
+		return switch (path) {
+		case "/about" -> new Index(new About(new Content()));
+		default -> new Index(new About(null));
+		};
 	}
 
 	@Render(template = "index.html")
@@ -120,7 +123,7 @@ public class AddressBook {
 			return content != null ? "content" : false;
 		}
 
-		public boolean ssr() {
+		public boolean prerender() {
 			return content != null;
 		}
 	}

@@ -47,9 +47,4 @@ export default class HomePage extends SlottableElement {
 		}, "");
 		dispatchEvent(new CustomEvent("popstate"));
 	}
-
-	renderState() {
-		// console.log("HomePage.renderState");
-		this.appendChild(this.interpolateDom());
-	}
 }

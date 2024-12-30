@@ -423,6 +423,10 @@ i {
   align-items: center;
 }
 
+#loading-splash:has(~ [slot="content"]) {
+	display: none;
+}
+
 #loading-splash-spinner {
   width: 3rem;
   height: 3rem;

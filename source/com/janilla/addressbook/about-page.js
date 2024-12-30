@@ -40,7 +40,7 @@ export default class AboutPage extends SlottableElement {
 
 	connectedCallback() {
 		// console.log("AboutPage.connectedCallback");
-		if (this.dataset.ssr !== undefined)
+		if (this.dataset.prerender !== undefined)
 			return;
 		super.connectedCallback();
 	}
@@ -55,10 +55,10 @@ export default class AboutPage extends SlottableElement {
 
 	renderState() {
 		// console.log("AboutPage.renderState");
-		if (this.dataset.ssr !== undefined) {
-			delete this.dataset.ssr;
+		if (this.dataset.prerender !== undefined) {
 			removeAllChildren(this);
+			delete this.dataset.prerender;
 		}
-		this.appendChild(this.interpolateDom());
+		super.renderState();
 	}
 }
