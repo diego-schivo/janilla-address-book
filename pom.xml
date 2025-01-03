@@ -35,12 +35,19 @@
 				<executions>
 					<execution>
 						<goals>
-							<goal>java</goal>
+							<goal>exec</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<mainClass>com.janilla.addressbook.AddressBook</mainClass>
+					<executable>java</executable>
+					<arguments>
+						<argument>--enable-preview</argument>
+						<argument>-p</argument>
+						<modulepath/>
+						<argument>-m</argument>
+						<argument>com.janilla.addressbook/com.janilla.addressbook.AddressBook</argument>
+					</arguments>
 				</configuration>
 			</plugin>
 		</plugins>
