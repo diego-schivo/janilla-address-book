@@ -28,7 +28,7 @@ So far the project has been developed with [Eclipse IDE](https://eclipseide.org/
 2. install the package for Enterprise Java and Web Developers with JRE 23
 3. launch the IDE and choose Import projects from Git (with smart import)
 4. select GitHub as the repository source, then search for `janilla-address-book` and complete the wizard
-5. open the Java class com.janilla.addressbook.AddressBook and launch Debug as Java Application
+5. open the Java class `com.janilla.addressbook.AddressBook` and launch Debug as Java Application
 6. open a browser and navigate to <https://localhost:8443/>
 
 > **_Note:_**  consider checking the Disable Cache checkbox in the Network tab of the Web Developer Tools.
