@@ -39,9 +39,10 @@ export default class AboutPage extends FlexibleElement {
 
 	connectedCallback() {
 		// console.log("AboutPage.connectedCallback");
-		if (this.dataset.prerender !== undefined)
-			return;
-		super.connectedCallback();
+		if (this.dataset.prerender != null)
+			this.remove();
+		else
+			super.connectedCallback();
 	}
 
 	async updateDisplay() {

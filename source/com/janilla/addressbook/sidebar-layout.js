@@ -26,7 +26,7 @@ import { FlexibleElement } from "./flexible-element.js";
 export default class SidebarLayout extends FlexibleElement {
 
 	static get observedAttributes() {
-		return ["data-loading", "data-path", "slot"];
+		return ["data-loading", "data-path", "data-query", "slot"];
 	}
 
 	static get templateName() {
@@ -60,11 +60,14 @@ export default class SidebarLayout extends FlexibleElement {
 		const q2 = el.value;
 		const u = new URL(location.href);
 		u.searchParams.set("q", q2);
+		const s = this.closest("app-layout").state;
+		delete s.contacts
 		if (!q1)
-			history.pushState(null, "", u.pathname + u.search);
+			history.pushState(s, "", u.pathname + u.search);
 		else
-			history.replaceState(null, "", u.pathname + u.search);
+			history.replaceState(s, "", u.pathname + u.search);
 		dispatchEvent(new CustomEvent("popstate"));
+		// this.requestUpdate();
 	}
 
 	handleSubmit = async event => {
@@ -74,35 +77,23 @@ export default class SidebarLayout extends FlexibleElement {
 			return;
 		event.preventDefault();
 		event.stopPropagation();
-		const c = await (await fetch("/api/contacts", {
+		const s = this.closest("app-layout").state;
+		s.contact = await (await fetch("/api/contacts", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify({})
 		})).json();
-		history.pushState({ contact: c }, "", `/contacts/${c.id}/edit`);
+		delete s.contacts;
+		history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	async updateDisplay() {
 		// console.log("SidebarLayout.updateDisplay");
 		const s = this.closest("app-layout").state;
-		if (this.dataset.loading != null) {
-			const u = new URL("/api/contacts", location.href);
-			const q = new URLSearchParams(location.search).get("q");
-			if (q)
-				u.searchParams.append("query", q);
-			s.contacts = await (await fetch(u)).json();
-			history.replaceState(s, "");
-			dispatchEvent(new CustomEvent("popstate"));
-			return;
-		} else if (this.slot === "content") {
-			const lp = location.pathname;
-			const m = lp.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
-			const o = {
-				homePage: {
-					$template: "home-page",
-					slot: lp === "/" ? "content" : null
-				},
+		if (this.slot === "content") {
+			const m = this.dataset.path.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
+			const o1 = {
 				contactPage: (() => {
 					const a = m[1] && !m[2];
 					return {
@@ -122,18 +113,25 @@ export default class SidebarLayout extends FlexibleElement {
 					};
 				})()
 			};
+			const o2 = {
+				homePage: {
+					$template: "home-page",
+					slot: Object.values(o1).some(x => x.slot === "content") ? null : "content"
+				},
+				...o1
+			};
 			this.shadowRoot.appendChild(this.interpolateDom({
 				$template: "shadow",
 				search: {
 					input: {
-						class: this.dataset.loading != null ? "loading" : null,
-						value: new URLSearchParams(location.search).get("q")
+						class: this.dataset.query && this.dataset.loading != null ? "loading" : null,
+						value: this.dataset.query
 					},
-					spinner: { hidden: this.dataset.loading == null }
+					spinner: { hidden: !this.dataset.query || this.dataset.loading == null }
 				},
 				contacts: {
-					$template: s.contacts.length ? "contacts" : "no-contacts",
-					items: s.contacts.map(x => ({
+					$template: s.contacts?.length ? "contacts" : "no-contacts",
+					items: s.contacts?.map(x => ({
 						$template: "item",
 						...x,
 						class: x.id === s.contact?.id ? "active"
@@ -145,12 +143,20 @@ export default class SidebarLayout extends FlexibleElement {
 						favorite: x.favorite ? { $template: "favorite" } : null
 					}))
 				},
-				detail: { class: Object.values(o).some(x => x.loading) ? "loading" : null }
+				detail: { class: Object.values(o2).some(x => x.loading) ? "loading" : null }
 			}));
 			this.appendChild(this.interpolateDom({
 				$template: "",
-				...o
+				...o2
 			}));
+		}
+		if (this.dataset.loading != null) {
+			const u = new URL("/api/contacts", location.href);
+			if (this.dataset.query)
+				u.searchParams.append("query", this.dataset.query);
+			s.contacts = await (await fetch(u)).json();
+			history.replaceState(s, "");
+			dispatchEvent(new CustomEvent("popstate"));
 		}
 	}
 }

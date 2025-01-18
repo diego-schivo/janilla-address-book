@@ -55,12 +55,13 @@ export default class EditContact extends FlexibleElement {
 		event.preventDefault();
 		event.stopPropagation();
 		const s = this.closest("app-layout").state;
-		const c = await (await fetch(`/api/contacts/${s.contact.id}`, {
+		s.contact = await (await fetch(`/api/contacts/${s.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
 		})).json();
-		history.pushState({ contact: c }, "", `/contacts/${c.id}`);
+		delete s.contacts;
+		history.pushState(s, "", `/contacts/${s.contact.id}`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 

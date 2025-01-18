@@ -35,8 +35,7 @@ export default class AppLayout extends FlexibleElement {
 	}
 
 	get state() {
-		// return (this.janillas.state ??= history.state ?? {});
-		return (this.janillas.state ??= {});
+		return this.janillas.state ??= {};
 	}
 
 	connectedCallback() {
@@ -59,13 +58,14 @@ export default class AppLayout extends FlexibleElement {
 			return;
 		event.preventDefault();
 		const u = new URL(a.href);
-		history.pushState({ contacts: this.state.contacts }, "", u.pathname + u.search);
+		history.pushState(this.state, "", u.pathname + u.search);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	handlePopState = event => {
 		// console.log("AppLayout.handlePopState", event);
-		this.janillas.state = event.state ?? history.state;
+		if (event.state)
+			this.janillas.state = event.state;
 		this.requestUpdate();
 	}
 
@@ -75,26 +75,30 @@ export default class AppLayout extends FlexibleElement {
 		const lp = location.pathname;
 		const s = this.state;
 		if (s.contacts)
-			this.janillas.foo = true;
-		this.appendChild(this.interpolateDom({
-			$template: "",
-			loadingSplash: {
-				$template: "loading-splash",
-				slot: !this.janillas.foo ? "content" : null
-			},
+			s.loaded ??= true;
+		const o = {
 			sidebarLayout: (() => {
 				const a = lp === "/" || lp.startsWith("/contacts/");
 				return {
 					$template: "sidebar-layout",
-					slot: a && this.janillas.foo ? "content" : null,
+					slot: s.loaded && a ? "content" : null,
 					loading: a && !s.contacts,
-					path: a ? lp : null
+					path: a ? lp : null,
+					query: a ? new URLSearchParams(location.search).get("q") : null
 				};
 			})(),
 			aboutPage: {
 				$template: "about-page",
 				slot: lp === "/about" ? "content" : null
 			}
+		};
+		this.appendChild(this.interpolateDom({
+			$template: "",
+			loadingSplash: {
+				$template: "loading-splash",
+				slot: s.loaded || Object.values(o).some(x => x.slot === "content") ? null : "content"
+			},
+			...o
 		}));
 	}
 }

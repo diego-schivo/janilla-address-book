@@ -57,14 +57,16 @@ export default class ContactPage extends FlexibleElement {
 		const s = this.closest("app-layout").state;
 		switch (event.target.method) {
 			case "get":
-				history.pushState({ contacts: s.contacts }, "", `/contacts/${s.contact.id}/edit`);
+				history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
 				dispatchEvent(new CustomEvent("popstate"));
 				break;
 			case "post":
 				if (!confirm("Please confirm you want to delete this record."))
 					return;
 				await (await fetch(`/api/contacts/${s.contact.id}`, { method: "DELETE" })).json();
-				history.pushState(null, "", "/");
+				delete s.contact;
+				delete s.contacts;
+				history.pushState(s, "", "/");
 				dispatchEvent(new CustomEvent("popstate"));
 				break;
 		}
@@ -75,12 +77,13 @@ export default class ContactPage extends FlexibleElement {
 		const s = this.closest("app-layout").state;
 		s.contact.favorite = event.detail.favorite;
 		this.requestUpdate();
-		const c = await (await fetch(`/api/contacts/${s.contact.id}/favorite`, {
+		s.contact = await (await fetch(`/api/contacts/${s.contact.id}/favorite`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(s.contact.favorite)
 		})).json();
-		history.pushState(null, "", "/");
+		delete s.contacts;
+		history.pushState(s, "", "/");
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
@@ -90,7 +93,8 @@ export default class ContactPage extends FlexibleElement {
 		if (this.dataset.loading != null) {
 			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 			history.replaceState(s, "");
-			dispatchEvent(new CustomEvent("popstate"));
+			// dispatchEvent(new CustomEvent("popstate"));
+			this.closest("sidebar-layout").requestUpdate();
 		} else if (this.slot === "content")
 			this.appendChild(this.interpolateDom({
 				$template: "",
