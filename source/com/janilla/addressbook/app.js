@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 import AboutPage from "./about-page.js";
-import AddressBook from "./address-book.js";
+import AppLayout from "./app-layout.js";
 import ContactPage from "./contact-page.js";
 import EditContact from "./edit-contact.js";
 import HomePage from "./home-page.js";
@@ -30,7 +30,7 @@ import SidebarLayout from "./sidebar-layout.js";
 import ToggleFavorite from "./toggle-favorite.js";
 
 customElements.define("about-page", AboutPage);
-customElements.define("address-book", AddressBook);
+customElements.define("app-layout", AppLayout);
 customElements.define("contact-page", ContactPage);
 customElements.define("edit-contact", EditContact);
 customElements.define("home-page", HomePage);

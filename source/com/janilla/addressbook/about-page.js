@@ -21,10 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { SlottableElement } from "./slottable-element.js";
-import { removeAllChildren } from "./dom-utils.js";
+import { FlexibleElement } from "./flexible-element.js";
 
-export default class AboutPage extends SlottableElement {
+export default class AboutPage extends FlexibleElement {
 
 	static get observedAttributes() {
 		return ["slot"];
@@ -45,20 +44,9 @@ export default class AboutPage extends SlottableElement {
 		super.connectedCallback();
 	}
 
-	async computeState() {
-		// console.log("AboutPage.computeState");
-		// await new Promise(r => setTimeout(r, 500));
-		await super.computeState();
-		history.replaceState(this.janillas.state, "");
-		dispatchEvent(new CustomEvent("popstate"));
-	}
-
-	renderState() {
-		// console.log("AboutPage.renderState");
-		if (this.dataset.prerender !== undefined) {
-			removeAllChildren(this);
-			delete this.dataset.prerender;
-		}
-		super.renderState();
+	async updateDisplay() {
+		// console.log("HomePage.updateDisplay");
+		if (this.slot === "content")
+			this.appendChild(this.interpolateDom({ $template: "" }));
 	}
 }

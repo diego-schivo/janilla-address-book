@@ -7,22 +7,11 @@
 	<script type="module" src="/app.js"></script>
 </head>
 <body>
-	<address-book>
-		<div id="loading-splash">
-			<div id="loading-splash-spinner"></div>
-			<p>Loading, please wait...</p>
-		</div>
-		<sidebar-layout>
-			<home-page></home-page>
-			<contact-page></contact-page>
-			<edit-contact></edit-contact>
-		</sidebar-layout>
-		<!--${about}-->
-	</address-book>
-	<template id="about">
-		<about-page slot="${slot}" data-prerender="${prerender}">
+	<!--${appLayout}-->
+	<template id="app-layout">
+		<app-layout>
 			<!--${content}-->
-		</about-page>
+		</app-layout>
 	</template>
 </body>
 </html>

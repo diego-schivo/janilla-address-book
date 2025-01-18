@@ -23,12 +23,13 @@
  */
 package com.janilla.addressbook;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Properties;
+
+import javax.net.ssl.SSLContext;
 
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpProtocol;
@@ -55,21 +56,20 @@ public class AddressBook {
 						p = System.getProperty("user.home") + p.substring(1);
 					pp.load(Files.newInputStream(Path.of(p)));
 				}
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
 			}
-			var a = new AddressBook(pp);
-			var hp = a.factory.create(HttpProtocol.class);
-			try (var is = Net.class.getResourceAsStream("testkeys")) {
-				hp.setSslContext(Net.getSSLContext("JKS", is, "passphrase".toCharArray()));
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
+			var ab = new AddressBook(pp);
+			Server s;
+			{
+				var a = new InetSocketAddress(
+						Integer.parseInt(ab.configuration.getProperty("address-book.server.port")));
+				SSLContext sc;
+				try (var is = Net.class.getResourceAsStream("testkeys")) {
+					sc = Net.getSSLContext("JKS", is, "passphrase".toCharArray());
+				}
+				var p = ab.factory.create(HttpProtocol.class,
+						Map.of("handler", ab.handler, "sslContext", sc, "useClientMode", false));
+				s = new Server(a, p);
 			}
-			hp.setHandler(a.handler);
-			var s = new Server();
-			s.setAddress(
-					new InetSocketAddress(Integer.parseInt(a.configuration.getProperty("address-book.server.port"))));
-			s.setProtocol(hp);
 			s.serve();
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -80,24 +80,23 @@ public class AddressBook {
 
 	public Factory factory;
 
-	public HttpHandler handler;
-
 	public Persistence persistence;
+
+	public HttpHandler handler;
 
 	public AddressBook(Properties configuration) {
 		this.configuration = configuration;
 		factory = new Factory();
 		factory.setTypes(Util.getPackageClasses(getClass().getPackageName()).toList());
 		factory.setSource(this);
-		handler = factory.create(ApplicationHandlerBuilder.class).build();
 		{
-			var pb = factory.create(ApplicationPersistenceBuilder.class);
 			var p = configuration.getProperty("address-book.database.file");
 			if (p.startsWith("~"))
 				p = System.getProperty("user.home") + p.substring(1);
-			pb.setFile(Path.of(p));
+			var pb = factory.create(ApplicationPersistenceBuilder.class, Map.of("databaseFile", Path.of(p)));
 			persistence = pb.build();
 		}
+		handler = factory.create(ApplicationHandlerBuilder.class).build();
 	}
 
 	public AddressBook application() {
@@ -107,17 +106,25 @@ public class AddressBook {
 	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
 	public Index index(String path) {
 		return switch (path) {
-		case "/about" -> new Index(new About(new Content()));
-		default -> new Index(new About(null));
+		case "/about" -> new Index(new AppLayout(new AppLayout.Content(new AboutPage(new AboutPage.Content()))));
+		default -> new Index(new AppLayout(null));
 		};
 	}
 
 	@Render(template = "index.html")
-	public record Index(About about) {
+	public record Index(AppLayout appLayout) {
 	}
 
-	@Render(template = "about")
-	public record About(@Render(template = "about-page.html") Content content) {
+	@Render(template = "app-layout")
+	public record AppLayout(Content content) {
+
+		@Render(template = "app-layout.html")
+		public record Content(AboutPage aboutPage) {
+		}
+	}
+
+	@Render(template = "about-page")
+	public record AboutPage(Content content) {
 
 		public Object slot() {
 			return content != null ? "content" : false;
@@ -126,8 +133,9 @@ public class AddressBook {
 		public boolean prerender() {
 			return content != null;
 		}
-	}
 
-	public record Content() {
+		@Render(template = "about-page.html")
+		public record Content() {
+		}
 	}
 }

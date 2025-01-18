@@ -21,12 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { SlottableElement } from "./slottable-element.js";
+import { FlexibleElement } from "./flexible-element.js";
 
-export default class EditContact extends SlottableElement {
+export default class EditContact extends FlexibleElement {
 
 	static get observedAttributes() {
-		return ["data-id", "slot"];
+		return ["data-id", "data-loading", "slot"];
 	}
 
 	static get templateName() {
@@ -54,17 +54,13 @@ export default class EditContact extends SlottableElement {
 		// console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const c = this.janillas.state.contact;
-		const c2 = await (await fetch(`/api/contacts/${c.id}`, {
+		const s = this.closest("app-layout").state;
+		const c = await (await fetch(`/api/contacts/${s.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
 		})).json();
-		this.dispatchEvent(new CustomEvent("update-contact", {
-			bubbles: true,
-			detail: { contact: c2 }
-		}));
-		history.pushState({ contacts: history.state.contacts }, "", `/contacts/${c.id}`);
+		history.pushState({ contact: c }, "", `/contacts/${c.id}`);
 		dispatchEvent(new CustomEvent("popstate"));
 	}
 
@@ -78,33 +74,15 @@ export default class EditContact extends SlottableElement {
 
 	async updateDisplay() {
 		// console.log("EditContact.updateDisplay");
-		if (!this.dataset.id)
-			return;
-		const c = this.janillas.state?.contact;
-		if (this.dataset.id !== c?.id?.toString())
-			this.janillas.state = undefined;
-		await super.updateDisplay();
-	}
-
-	async computeState() {
-		// console.log("EditContact.computeState");
-		const c = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-		this.janillas.state = { contact: c };
-		history.replaceState({
-			contacts: history.state?.contacts,
-			...this.janillas.state
-		}, "");
-		dispatchEvent(new CustomEvent("popstate"));
-	}
-
-	renderState() {
-		// console.log("EditContact.renderState");
-		const c = this.janillas.state?.contact;
-		if (!c)
-			return;
-		this.appendChild(this.interpolateDom({
-			$template: "",
-			...c
-		}));
+		const s = this.closest("app-layout").state;
+		if (this.dataset.loading != null) {
+			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+			history.replaceState(s, "");
+			dispatchEvent(new CustomEvent("popstate"));
+		} else if (this.slot === "content")
+			this.appendChild(this.interpolateDom({
+				$template: "",
+				...s.contact
+			}));
 	}
 }
