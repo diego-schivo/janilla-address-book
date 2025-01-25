@@ -54,7 +54,7 @@ export default class ContactPage extends FlexibleElement {
 		// console.log("ContactPage.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		switch (event.target.method) {
 			case "get":
 				history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
@@ -74,7 +74,7 @@ export default class ContactPage extends FlexibleElement {
 
 	handleToggleFavorite = async event => {
 		// console.log("ContactPage.handleToggleFavorite", event);
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		s.contact.favorite = event.detail.favorite;
 		this.requestUpdate();
 		s.contact = await (await fetch(`/api/contacts/${s.contact.id}/favorite`, {
@@ -89,7 +89,7 @@ export default class ContactPage extends FlexibleElement {
 
 	async updateDisplay() {
 		// console.log("ContactPage.updateDisplay");
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		if (this.dataset.loading != null) {
 			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 			history.replaceState(s, "");

@@ -23,10 +23,10 @@
  */
 import { FlexibleElement } from "./flexible-element.js";
 
-export default class AppLayout extends FlexibleElement {
+export default class RootLayout extends FlexibleElement {
 
 	static get templateName() {
-		return "app-layout";
+		return "root-layout";
 	}
 
 	constructor() {
@@ -35,24 +35,28 @@ export default class AppLayout extends FlexibleElement {
 	}
 
 	get state() {
-		return this.janillas.state ??= {};
+		return this.janillas.state;
+	}
+
+	set state(x) {
+		this.janillas.state = x;
 	}
 
 	connectedCallback() {
-		// console.log("AppLayout.connectedCallback");
-		super.connectedCallback();
+		// console.log("RootLayout.connectedCallback");
 		addEventListener("popstate", this.handlePopState);
 		this.addEventListener("click", this.handleClick);
+		dispatchEvent(new CustomEvent("popstate"));
 	}
 
 	disconnectedCallback() {
-		// console.log("AppLayout.disconnectedCallback");
+		// console.log("RootLayout.disconnectedCallback");
 		removeEventListener("popstate", this.handlePopState);
 		this.removeEventListener("click", this.handleClick);
 	}
 
 	handleClick = event => {
-		// console.log("AppLayout.handleClick", event);
+		// console.log("RootLayout.handleClick", event);
 		const a = event.composedPath().find(x => x.tagName?.toLowerCase() === "a");
 		if (!a?.href)
 			return;
@@ -63,33 +67,32 @@ export default class AppLayout extends FlexibleElement {
 	}
 
 	handlePopState = event => {
-		// console.log("AppLayout.handlePopState", event);
-		if (event.state)
-			this.janillas.state = event.state;
+		// console.log("RootLayout.handlePopState", event);
+		this.state = event.state ?? history.state ?? {};
 		this.requestUpdate();
 	}
 
 	async updateDisplay() {
-		// console.log("AppLayout.updateDisplay");
+		// console.log("RootLayout.updateDisplay");
 		this.shadowRoot.appendChild(this.interpolateDom({ $template: "shadow" }));
-		const lp = location.pathname;
+		const p = location.pathname;
 		const s = this.state;
 		if (s.contacts)
 			s.loaded ??= true;
 		const o = {
 			sidebarLayout: (() => {
-				const a = lp === "/" || lp.startsWith("/contacts/");
+				const a = p === "/" || p.startsWith("/contacts/");
 				return {
 					$template: "sidebar-layout",
 					slot: s.loaded && a ? "content" : null,
 					loading: a && !s.contacts,
-					path: a ? lp : null,
+					path: a ? p : null,
 					query: a ? new URLSearchParams(location.search).get("q") : null
 				};
 			})(),
 			aboutPage: {
 				$template: "about-page",
-				slot: lp === "/about" ? "content" : null
+				slot: p === "/about" ? "content" : null
 			}
 		};
 		this.appendChild(this.interpolateDom({

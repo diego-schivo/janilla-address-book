@@ -60,7 +60,7 @@ export default class SidebarLayout extends FlexibleElement {
 		const q2 = el.value;
 		const u = new URL(location.href);
 		u.searchParams.set("q", q2);
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		delete s.contacts
 		if (!q1)
 			history.pushState(s, "", u.pathname + u.search);
@@ -77,7 +77,7 @@ export default class SidebarLayout extends FlexibleElement {
 			return;
 		event.preventDefault();
 		event.stopPropagation();
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		s.contact = await (await fetch("/api/contacts", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
@@ -90,7 +90,7 @@ export default class SidebarLayout extends FlexibleElement {
 
 	async updateDisplay() {
 		// console.log("SidebarLayout.updateDisplay");
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		if (this.slot === "content") {
 			const m = this.dataset.path.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
 			const o1 = {

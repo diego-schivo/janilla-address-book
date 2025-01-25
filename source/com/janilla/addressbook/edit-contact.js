@@ -54,7 +54,7 @@ export default class EditContact extends FlexibleElement {
 		// console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		s.contact = await (await fetch(`/api/contacts/${s.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
@@ -75,7 +75,7 @@ export default class EditContact extends FlexibleElement {
 
 	async updateDisplay() {
 		// console.log("EditContact.updateDisplay");
-		const s = this.closest("app-layout").state;
+		const s = this.closest("root-layout").state;
 		if (this.dataset.loading != null) {
 			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 			history.replaceState(s, "");

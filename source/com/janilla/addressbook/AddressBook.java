@@ -106,19 +106,19 @@ public class AddressBook {
 	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
 	public Index index(String path) {
 		return switch (path) {
-		case "/about" -> new Index(new AppLayout(new AppLayout.Content(new AboutPage(new AboutPage.Content()))));
-		default -> new Index(new AppLayout(null));
+		case "/about" -> new Index(new RootLayout(new RootLayout.Content(new AboutPage(new AboutPage.Content()))));
+		default -> new Index(new RootLayout(null));
 		};
 	}
 
 	@Render(template = "index.html")
-	public record Index(AppLayout appLayout) {
+	public record Index(RootLayout rootLayout) {
 	}
 
-	@Render(template = "app-layout")
-	public record AppLayout(Content content) {
+	@Render(template = "root-layout")
+	public record RootLayout(Content content) {
 
-		@Render(template = "app-layout.html")
+		@Render(template = "root-layout.html")
 		public record Content(AboutPage aboutPage) {
 		}
 	}
