@@ -39,12 +39,12 @@ public class CustomMethodHandlerFactory extends MethodHandlerFactory {
 		if (Boolean.parseBoolean(configuration.getProperty("address-book.live-demo")) && !rq.getMethod().equals("GET"))
 			throw new HandleException(new MethodBlockedException());
 
-		if (exchange.getRequest().getPath().startsWith("/api"))
-			try {
-				Thread.sleep(250);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+//		if (exchange.getRequest().getPath().startsWith("/api"))
+//			try {
+//				Thread.sleep(500);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
 
 		super.handle(invocation, exchange);
 	}
