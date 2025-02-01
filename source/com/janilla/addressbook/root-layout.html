@@ -1,0 +1,25 @@
+<template id="shadow">
+	<link href="/app.css" rel="stylesheet" />
+	<slot name="content"></slot>
+</template>
+
+<!--${loadingSplash}-->
+<!--${sidebarLayout}-->
+<!--${aboutPage}-->
+
+<template id="loading-splash">
+	<div id="loading-splash" slot="${slot}">
+		<div id="loading-splash-spinner"></div>
+		<p>Loading, please wait...</p>
+	</div>
+</template>
+
+<template id="sidebar-layout">
+	<sidebar-layout slot="${slot}" data-loading="${loading}" data-path="${path}" data-query="${query}"></sidebar-layout>
+</template>
+
+<template id="about-page">
+	<about-page slot="${slot}" data-prerender="${prerender}">
+		<!--${content}-->
+	</about-page>
+</template>

@@ -24,16 +24,22 @@
 package com.janilla.addressbook;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 
 import com.janilla.persistence.ApplicationPersistenceBuilder;
 import com.janilla.persistence.Persistence;
+import com.janilla.reflect.Factory;
 
 public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
 
+	public CustomPersistenceBuilder(Path databaseFile, Factory factory) {
+		super(databaseFile, factory);
+	}
+
 	@Override
 	public Persistence build() {
-		var fe = Files.exists(file);
+		var fe = Files.exists(databaseFile);
 		var p = super.build();
 		if (!fe)
 			FakeData.INSTANCE.contacts().forEach(x -> p.crud(Contact.class).create(x.withCreatedAt(Instant.now())));

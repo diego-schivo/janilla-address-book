@@ -24,6 +24,7 @@
 package com.janilla.addressbook;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -41,8 +42,8 @@ public class ContactApi {
 	public Stream<Contact> list(@Bind("query") String query) {
 		var cc = persistence.crud(Contact.class);
 		var qcc = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
-		return cc.read(qcc != null ? cc.filter("full", x -> {
-			var s = ((String) x).toLowerCase();
+		return cc.read(qcc != null ? cc.filter("full", x -> Arrays.stream(((String) x).split(" ")).anyMatch(y -> {
+			var s = y.toLowerCase();
 			var i = -1;
 			for (var c : qcc) {
 				i = s.indexOf(c, i + 1);
@@ -50,7 +51,7 @@ public class ContactApi {
 					return false;
 			}
 			return true;
-		}) : cc.list());
+		})) : cc.list());
 	}
 
 	@Handle(method = "POST", path = "/api/contacts")

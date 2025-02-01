@@ -1,51 +1,75 @@
-<link href="/app.css" rel="stylesheet" />
-<div id="sidebar">
-	<h1>
-		<a href="/about">React Router Contacts</a>
-	</h1>
-	<div>
-		<form id="search-form" role="search">
-			<input
-				aria-label="Search contacts"
-				class="${search.input.class}"
-				value="${search.input.value}"
-				id="q"
-				name="q"
-				placeholder="Search"
-				type="search"
-			/>
-			<div
-				aria-hidden
-				hidden="${search.spinner.hidden}"
-				id="search-spinner">
-			</div>
-		</form>
-		<form method="post">
-			<button type="submit">New</button>
-		</form>
+<template id="shadow">
+	<link href="/app.css" rel="stylesheet" />
+	<div id="sidebar">
+		<h1>
+			<a href="/about">React Router Contacts</a>
+		</h1>
+		<div>
+			<form id="search-form" role="search">
+				<input
+					aria-label="Search contacts"
+					class="${search.input.class}"
+					value="${search.input.value}"
+					id="q"
+					name="q"
+					placeholder="Search"
+					type="search"
+				/>
+				<div
+					aria-hidden
+					hidden="${search.spinner.hidden}"
+					id="search-spinner">
+				</div>
+			</form>
+			<form method="post">
+				<button type="submit">New</button>
+			</form>
+		</div>
+		<nav>
+			<!--${contacts}-->
+		</nav>
 	</div>
-	<nav>
-		<!--${contacts}-->
-		<template id="contacts">
-			<ul>
-				<!--${items}-->
-			</ul>
-		</template>
-		<template id="no-contacts">
-			<p>
-				<i>No contacts</i>
-			</p>
-		</template>
-		<template id="item">
-			<li>
-				<a href="/contacts/${id}" class="${class}"><!--${name}--><!--${favorite}--></a>
-			</li>
-		</template>
-		<template id="name">${full}</template>
-		<template id="no-name"><i>No Name</i></template>
-		<template id="favorite"><span>★</span></template>
-	</nav>
-</div>
-<div id="detail" class="${detail.class}">
-	<slot name="content"></slot>
-</div>
+	<div id="detail" class="${detail.class}">
+		<slot name="content"></slot>
+	</div>
+</template>
+
+<template id="contacts">
+	<ul>
+		<!--${items}-->
+	</ul>
+</template>
+
+<template id="no-contacts">
+	<p>
+		<i>No contacts</i>
+	</p>
+</template>
+
+<template id="item">
+	<li>
+		<a href="/contacts/${id}" class="${class}"><!--${name}--><!--${favorite}--></a>
+	</li>
+</template>
+
+<template id="name">${full}</template>
+
+<template id="no-name"><i>No Name</i></template>
+
+<template id="favorite"><span>★</span></template>
+
+<!--${homePage}-->
+<!--${contactPage}-->
+<!--${editContact}-->
+
+<template id="home-page">
+	<home-page slot="${slot}"></home-page>
+</template>
+
+<template id="contact-page">
+	<contact-page slot="${slot}" data-loading="${loading}" data-id="${id}"></contact-page>
+</template>
+
+<template id="edit-contact">
+	<edit-contact slot="${slot}"></edit-contact>
+</template>
