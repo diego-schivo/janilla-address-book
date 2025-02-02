@@ -34,14 +34,6 @@ export default class RootLayout extends UpdatableHTMLElement {
 		this.attachShadow({ mode: "open" });
 	}
 
-	get state() {
-		return this.janillas.state;
-	}
-
-	set state(x) {
-		this.janillas.state = x;
-	}
-
 	connectedCallback() {
 		// console.log("RootLayout.connectedCallback");
 		addEventListener("popstate", this.handlePopState);

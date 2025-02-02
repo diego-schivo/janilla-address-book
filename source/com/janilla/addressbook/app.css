@@ -1,3 +1,7 @@
+:root {
+	color-scheme: light dark;
+}
+
 html {
   box-sizing: border-box;
 }
@@ -25,7 +29,7 @@ body {
   height: 100%;
   margin: 0;
   line-height: 1.5;
-  color: #121212;
+  color: light-dark(#121212, #ededed);
 }
 textarea,
 input,
@@ -41,7 +45,7 @@ button {
   margin: 0;
 }
 button {
-  color: #3992ff;
+  color: light-dark(#3992ff, #c66d00);
   font-weight: 500;
 }
 
@@ -73,15 +77,15 @@ button:active {
   padding: 0;
 }
 #contact h1 form button[value="true"] {
-  color: #a4a4a4;
+  color: light-dark(#a4a4a4, #5b5b5b);
 }
 #contact h1 form button[value="true"]:hover,
 #contact h1 form button[value="false"] {
-  color: #eeb004;
+  color: light-dark(#eeb004, #114ffb);
 }
 
 form[action$="destroy"] button {
-  color: #f44250;
+  color: light-dark(#f44250, #0bbdaf);
 }
 
 .sr-only {
@@ -105,7 +109,7 @@ sidebar-layout {
 
 #sidebar {
   width: 22rem;
-  background-color: #f7f7f7;
+  background-color: light-dark(#f7f7f7, #080808);
   border-right: solid 1px #e3e3e3;
   display: flex;
   flex-direction: column;
@@ -129,7 +133,7 @@ sidebar-layout {
 }
 
 #sidebar h1 a {
-  color: #3992ff;
+  color: light-dark(#3992ff, #c66d00);
   text-decoration: none;
 }
 
@@ -199,14 +203,14 @@ sidebar-layout {
 
 #sidebar nav a span {
   float: right;
-  color: #eeb004;
+  color: light-dark(#eeb004, #114ffb);
 }
 #sidebar nav a.active span {
   color: inherit;
 }
 
 i {
-  color: #818181;
+  color: light-dark(#818181, #7e7e7e);
 }
 #sidebar nav .active i {
   color: inherit;
@@ -238,7 +242,7 @@ i {
 }
 
 #sidebar nav a:hover {
-  background: #e3e3e3;
+  background: light-dark(#e3e3e3, #1c1c1c);
 }
 
 #sidebar nav a.active {
@@ -253,13 +257,13 @@ i {
 
 @keyframes progress {
   0% {
-    background: #e3e3e3;
+    background: light-dark(#e3e3e3, #1c1c1c);
   }
   50% {
     background: hsla(224, 98%, 58%, 0.5);
   }
   100% {
-    background: #e3e3e3;
+    background: light-dark(#e3e3e3, #1c1c1c);
   }
 }
 
@@ -303,7 +307,7 @@ i {
 #contact a[href*="twitter"] {
   display: flex;
   font-size: 1.5rem;
-  color: #3992ff;
+  color: light-dark(#3992ff, #c66d00);
   text-decoration: none;
 }
 #contact a[href*="twitter"]:hover {
@@ -313,7 +317,7 @@ i {
 #contact img {
   width: 12rem;
   height: 12rem;
-  background: #c8c8c8;
+  background: light-dark(#c8c8c8, #373737);
   margin-right: 2rem;
   border-radius: 1.5rem;
   object-fit: cover;
@@ -381,7 +385,7 @@ i {
 #index-page {
   margin: 2rem auto;
   text-align: center;
-  color: #818181;
+  color: light-dark(#818181, #7e7e7e);
 }
 
 #index-page a {
@@ -389,7 +393,7 @@ i {
 }
 
 #index-page a:hover {
-  color: #121212;
+  color: light-dark(#121212, #ededed);
 }
 
 #index-page:before {
