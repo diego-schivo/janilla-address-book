@@ -21,9 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { UpdatableHTMLElement } from "./updatable-html-element.js";
+import { WebComponent } from "./web-component.js";
 
-export default class ContactPage extends UpdatableHTMLElement {
+export default class ContactPage extends WebComponent {
 
 	static get observedAttributes() {
 		return ["data-id", "data-loading", "slot"];
@@ -76,7 +76,7 @@ export default class ContactPage extends UpdatableHTMLElement {
 		// console.log("ContactPage.handleToggleFavorite", event);
 		const s = this.closest("root-layout").state;
 		s.contact.favorite = event.detail.favorite;
-		this.requestUpdate();
+		this.requestDisplay();
 		s.contact = await (await fetch(`/api/contacts/${s.contact.id}/favorite`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
@@ -94,7 +94,7 @@ export default class ContactPage extends UpdatableHTMLElement {
 			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
 			history.replaceState(s, "");
 			// dispatchEvent(new CustomEvent("popstate"));
-			this.closest("sidebar-layout").requestUpdate();
+			this.closest("sidebar-layout").requestDisplay();
 		} else if (this.slot === "content")
 			this.appendChild(this.interpolateDom({
 				$template: "",

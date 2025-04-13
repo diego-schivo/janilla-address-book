@@ -21,9 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { UpdatableHTMLElement } from "./updatable-html-element.js";
+import { WebComponent } from "./web-component.js";
 
-export default class SidebarLayout extends UpdatableHTMLElement {
+export default class SidebarLayout extends WebComponent {
 
 	static get observedAttributes() {
 		return ["data-loading", "data-path", "data-query", "slot"];
@@ -67,7 +67,7 @@ export default class SidebarLayout extends UpdatableHTMLElement {
 		else
 			history.replaceState(s, "", u.pathname + u.search);
 		dispatchEvent(new CustomEvent("popstate"));
-		// this.requestUpdate();
+		// this.requestDisplay();
 	}
 
 	handleSubmit = async event => {

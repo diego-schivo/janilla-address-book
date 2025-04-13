@@ -36,7 +36,7 @@ public record FakeData(List<Contact> contacts) {
 
 	static {
 		try (var is = FakeData.class.getResourceAsStream("fake-data.json")) {
-			INSTANCE = (FakeData) new Converter().convert(Json.parse(new String(is.readAllBytes())),
+			INSTANCE = (FakeData) new Converter(null).convert(Json.parse(new String(is.readAllBytes())),
 					FakeData.class);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);

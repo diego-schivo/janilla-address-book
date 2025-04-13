@@ -25,8 +25,8 @@ package com.janilla.addressbook;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import com.janilla.persistence.Persistence;
 import com.janilla.reflect.Reflection;
@@ -39,7 +39,7 @@ public class ContactApi {
 	public Persistence persistence;
 
 	@Handle(method = "GET", path = "/api/contacts")
-	public Stream<Contact> list(@Bind("query") String query) {
+	public List<Contact> list(@Bind("query") String query) {
 		var cc = persistence.crud(Contact.class);
 		var qcc = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
 		return cc.read(qcc != null ? cc.filter("full", x -> Arrays.stream(((String) x).split(" ")).anyMatch(y -> {
