@@ -29,8 +29,8 @@ export default class ContactPage extends WebComponent {
 		return ["data-id", "data-loading", "slot"];
 	}
 
-	static get templateName() {
-		return "contact-page";
+	static get templateNames() {
+		return ["contact-page"];
 	}
 
 	constructor() {

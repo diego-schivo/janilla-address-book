@@ -29,8 +29,8 @@ export default class AboutPage extends WebComponent {
 		return ["slot"];
 	}
 
-	static get templateName() {
-		return "about-page";
+	static get templateNames() {
+		return ["about-page"];
 	}
 
 	constructor() {

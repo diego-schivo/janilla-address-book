@@ -29,8 +29,8 @@ export default class EditContact extends WebComponent {
 		return ["data-id", "data-loading", "slot"];
 	}
 
-	static get templateName() {
-		return "edit-contact";
+	static get templateNames() {
+		return ["edit-contact"];
 	}
 
 	constructor() {

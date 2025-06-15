@@ -29,8 +29,8 @@ export default class ToggleFavorite extends WebComponent {
 		return ["data-checked"];
 	}
 
-	static get templateName() {
-		return "toggle-favorite";
+	static get templateNames() {
+		return ["toggle-favorite"];
 	}
 
 	constructor() {

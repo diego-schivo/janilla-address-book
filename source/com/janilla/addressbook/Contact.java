@@ -27,13 +27,14 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.janilla.persistence.Entity;
 import com.janilla.persistence.Index;
 import com.janilla.persistence.Store;
 
 @Store
 @Index(sort = "last")
 public record Contact(Long id, Instant createdAt, String avatar, String first, String last, String twitter,
-		Boolean favorite) {
+		Boolean favorite) implements Entity<Long> {
 
 	@Index
 	public String full() {

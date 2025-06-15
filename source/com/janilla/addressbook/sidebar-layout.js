@@ -29,8 +29,8 @@ export default class SidebarLayout extends WebComponent {
 		return ["data-loading", "data-path", "data-query", "slot"];
 	}
 
-	static get templateName() {
-		return "sidebar-layout";
+	static get templateNames() {
+		return ["sidebar-layout"];
 	}
 
 	constructor() {
