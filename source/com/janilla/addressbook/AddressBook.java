@@ -42,6 +42,7 @@ import com.janilla.util.Util;
 import com.janilla.web.ApplicationHandlerBuilder;
 import com.janilla.web.Handle;
 import com.janilla.web.Render;
+import com.janilla.web.RenderableFactory;
 
 public class AddressBook {
 
@@ -79,6 +80,8 @@ public class AddressBook {
 
 	public Persistence persistence;
 
+	public RenderableFactory renderableFactory;
+
 	public HttpHandler handler;
 
 	public MapAndType.TypeResolver typeResolver;
@@ -97,6 +100,7 @@ public class AddressBook {
 			var pb = factory.create(ApplicationPersistenceBuilder.class, Map.of("databaseFile", Path.of(p)));
 			persistence = pb.build();
 		}
+		renderableFactory = new RenderableFactory();
 		handler = factory.create(ApplicationHandlerBuilder.class).build();
 	}
 

@@ -48,7 +48,7 @@ export default class RootLayout extends WebComponent {
 	}
 
 	handleClick = event => {
-		// console.log("RootLayout.handleClick", event);
+		console.log("RootLayout.handleClick", event);
 		const a = event.composedPath().find(x => x.tagName?.toLowerCase() === "a");
 		if (!a?.href)
 			return;
@@ -59,14 +59,13 @@ export default class RootLayout extends WebComponent {
 	}
 
 	handlePopState = event => {
-		// console.log("RootLayout.handlePopState", event);
+		console.log("RootLayout.handlePopState", event);
 		this.state = event.state ?? history.state ?? {};
 		this.requestDisplay();
 	}
 
 	async updateDisplay() {
-		// console.log("RootLayout.updateDisplay");
-		this.shadowRoot.appendChild(this.interpolateDom({ $template: "shadow" }));
+		console.log("RootLayout.updateDisplay");
 		const p = location.pathname;
 		const s = this.state;
 		if (s.contacts)
@@ -87,13 +86,15 @@ export default class RootLayout extends WebComponent {
 				slot: p === "/about" ? "content" : null
 			}
 		};
-		this.appendChild(this.interpolateDom({
+		const df = this.interpolateDom({
 			$template: "",
 			loadingSplash: {
 				$template: "loading-splash",
 				slot: s.loaded || Object.values(o).some(x => x.slot === "content") ? null : "content"
 			},
 			...o
-		}));
+		});
+		this.shadowRoot.append(...df.querySelectorAll("link, slot"));
+		this.appendChild(df);
 	}
 }

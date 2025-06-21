@@ -63,11 +63,16 @@ export default class ContactPage extends WebComponent {
 			case "post":
 				if (!confirm("Please confirm you want to delete this record."))
 					return;
-				await (await fetch(`/api/contacts/${s.contact.id}`, { method: "DELETE" })).json();
-				delete s.contact;
-				delete s.contacts;
-				history.pushState(s, "", "/");
-				dispatchEvent(new CustomEvent("popstate"));
+				const r = await fetch(`/api/contacts/${s.contact.id}`, { method: "DELETE" });
+				if (r.ok) {
+					delete s.contact;
+					delete s.contacts;
+					history.pushState(s, "", "/");
+					dispatchEvent(new CustomEvent("popstate"));
+				} else {
+					const t = await r.text();
+					alert(t);
+				}
 				break;
 		}
 	}
@@ -77,14 +82,20 @@ export default class ContactPage extends WebComponent {
 		const s = this.closest("root-layout").state;
 		s.contact.favorite = event.detail.favorite;
 		this.requestDisplay();
-		s.contact = await (await fetch(`/api/contacts/${s.contact.id}/favorite`, {
+		const r = await fetch(`/api/contacts/${s.contact.id}/favorite`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(s.contact.favorite)
-		})).json();
-		delete s.contacts;
-		history.pushState(s, "", "/");
-		dispatchEvent(new CustomEvent("popstate"));
+		});
+		if (r.ok) {
+			s.contact = await r.json();
+			delete s.contacts;
+			history.pushState(s, "", "/");
+			dispatchEvent(new CustomEvent("popstate"));
+		} else {
+			const t = await r.text();
+			alert(t);
+		}
 	}
 
 	async updateDisplay() {

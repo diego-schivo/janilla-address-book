@@ -55,14 +55,20 @@ export default class EditContact extends WebComponent {
 		event.preventDefault();
 		event.stopPropagation();
 		const s = this.closest("root-layout").state;
-		s.contact = await (await fetch(`/api/contacts/${s.contact.id}`, {
+		const r = await fetch(`/api/contacts/${s.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
-		})).json();
-		delete s.contacts;
-		history.pushState(s, "", `/contacts/${s.contact.id}`);
-		dispatchEvent(new CustomEvent("popstate"));
+		});
+		if (r.ok) {
+			s.contact = await r.json();
+			delete s.contacts;
+			history.pushState(s, "", `/contacts/${s.contact.id}`);
+			dispatchEvent(new CustomEvent("popstate"));
+		} else {
+			const t = await r.text();
+			alert(t);
+		}
 	}
 
 	handleClick = async event => {

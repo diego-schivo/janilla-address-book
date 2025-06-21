@@ -78,14 +78,20 @@ export default class SidebarLayout extends WebComponent {
 		event.preventDefault();
 		event.stopPropagation();
 		const s = this.closest("root-layout").state;
-		s.contact = await (await fetch("/api/contacts", {
+		const r = await fetch("/api/contacts", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
 			body: JSON.stringify({})
-		})).json();
-		delete s.contacts;
-		history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
-		dispatchEvent(new CustomEvent("popstate"));
+		});
+		if (r.ok) {
+			s.contact = await r.json();
+			delete s.contacts;
+			history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
+			dispatchEvent(new CustomEvent("popstate"));
+		} else {
+			const t = await r.text();
+			alert(t);
+		}
 	}
 
 	async updateDisplay() {
@@ -120,8 +126,8 @@ export default class SidebarLayout extends WebComponent {
 				},
 				...o1
 			};
-			this.shadowRoot.appendChild(this.interpolateDom({
-				$template: "shadow",
+			const df = this.interpolateDom({
+				$template: "",
 				search: {
 					input: {
 						class: this.dataset.query && this.dataset.loading != null ? "loading" : null,
@@ -143,12 +149,11 @@ export default class SidebarLayout extends WebComponent {
 						favorite: x.favorite ? { $template: "favorite" } : null
 					}))
 				},
-				detail: { class: Object.values(o2).some(x => x.loading) ? "loading" : null }
-			}));
-			this.appendChild(this.interpolateDom({
-				$template: "",
+				detail: { class: Object.values(o2).some(x => x.loading) ? "loading" : null },
 				...o2
-			}));
+			});
+			this.shadowRoot.append(...df.querySelectorAll("link, #sidebar, #detail"));
+			this.appendChild(df);
 		}
 		if (this.dataset.loading != null) {
 			const u = new URL("/api/contacts", location.href);
