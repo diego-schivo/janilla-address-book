@@ -3,16 +3,12 @@
 <head>
 	<meta charSet="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="stylesheet" href="/app.css" />
-	<script type="module" src="/app.js"></script>
+	<link rel="stylesheet" href="/style.css" />
+	<script type="module" src="/script.js"></script>
 </head>
 <body>
-	<!--${rootLayout}-->
+	<app-element>
+		<script type="application/json">${state}</script>
+	</app-element>
 </body>
 </html>
-
-<template id="root-layout">
-	<root-layout>
-		<!--${content}-->
-	</root-layout>
-</template>

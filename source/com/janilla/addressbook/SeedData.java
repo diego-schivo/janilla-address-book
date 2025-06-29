@@ -30,14 +30,11 @@ import java.util.List;
 import com.janilla.json.Converter;
 import com.janilla.json.Json;
 
-public record FakeData(List<Contact> contacts) {
+public record SeedData(List<Contact> contacts) {
 
-	public static FakeData INSTANCE;
-
-	static {
-		try (var is = FakeData.class.getResourceAsStream("fake-data.json")) {
-			INSTANCE = (FakeData) new Converter(null).convert(Json.parse(new String(is.readAllBytes())),
-					FakeData.class);
+	public static SeedData read() {
+		try (var x = SeedData.class.getResourceAsStream("seed-data.json")) {
+			return (SeedData) new Converter(null).convert(Json.parse(new String(x.readAllBytes())), SeedData.class);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}

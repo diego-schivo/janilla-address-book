@@ -21,18 +21,89 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import AboutPage from "./about-page.js";
-import RootLayout from "./root-layout.js";
-import ContactPage from "./contact-page.js";
-import EditContact from "./edit-contact.js";
-import HomePage from "./home-page.js";
-import SidebarLayout from "./sidebar-layout.js";
-import ToggleFavorite from "./toggle-favorite.js";
+import WebComponent from "./web-component.js";
 
-customElements.define("about-page", AboutPage);
-customElements.define("root-layout", RootLayout);
-customElements.define("contact-page", ContactPage);
-customElements.define("edit-contact", EditContact);
-customElements.define("home-page", HomePage);
-customElements.define("sidebar-layout", SidebarLayout);
-customElements.define("toggle-favorite", ToggleFavorite);
+export default class App extends WebComponent {
+
+	static get templateNames() {
+		return ["app"];
+	}
+
+	constructor() {
+		super();
+		this.attachShadow({ mode: "open" });
+	}
+
+	connectedCallback() {
+		const el = this.children.length === 1 ? this.firstElementChild : null;
+		if (el?.matches('[type="application/json"]')) {
+			this.popState = JSON.parse(el.text);
+			history.replaceState(this.popState, "");
+			el.remove();
+		}
+		super.connectedCallback();
+		this.addEventListener("click", this.handleClick);
+		addEventListener("popstate", this.handlePopState);
+	}
+
+	disconnectedCallback() {
+		super.disconnectedCallback();
+		this.removeEventListener("click", this.handleClick);
+		removeEventListener("popstate", this.handlePopState);
+	}
+
+	async updateDisplay() {
+		const hs = history.state;
+		const o = {
+			$template: "",
+			sidebar: (() => {
+				const h = location.pathname === "/";
+				const c = location.pathname.match(/\/contacts\/([^/]+)(\/edit)?/);
+				const sl = (h || c) ? this.querySelector("sidebar-layout") : null;
+				const ce = c && !c[2] ? this.querySelector("contact-element") : null;
+				const ec = c && c[2] ? this.querySelector("edit-contact") : null;
+				return {
+					$template: "sidebar",
+					slot: (h || c) ? (hs?.contacts ? "content" : "new-content") : null,
+					href: location.pathname + location.search,
+					loading: (h || c) && !(sl?.state ?? hs)?.contacts,
+					pending: c && c[1] != ((ce ?? ec)?.state?.contact ?? hs?.contact)?.id
+				};
+			})(),
+			about: {
+				$template: "about",
+				slot: location.pathname === "/about" ? "content" : null
+			}
+		};
+		o.loading = {
+			$template: "loading",
+			slot: ["sidebar", "about"].every(x => o[x].slot !== "content") ? "content" : null
+		};
+		const df = this.interpolateDom(o);
+		this.shadowRoot.append(...df.querySelectorAll("link, slot"));
+		this.appendChild(df);
+	}
+
+	handleClick = event => {
+		const a = event.composedPath().find(x => x instanceof Element && x.matches("a"));
+		if (a?.href) {
+			event.preventDefault();
+			const u = new URL(a.href);
+			const hs = history.state ?? {};
+			const h = location.pathname === "/";
+			const c = location.pathname.match(/\/contacts\/([^/]+)(\/edit)?/);
+			if (!c) {
+				delete hs.contact;
+				if (!h)
+					delete hs.contacts;
+			}
+			history.pushState(hs, "", u.pathname + u.search);
+			dispatchEvent(new CustomEvent("popstate"));
+		}
+	}
+
+	handlePopState = event => {
+		this.popState = event.state;
+		this.requestDisplay();
+	}
+}

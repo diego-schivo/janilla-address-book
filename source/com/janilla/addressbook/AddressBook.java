@@ -28,12 +28,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLContext;
 
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
+import com.janilla.json.Json;
 import com.janilla.json.MapAndType;
+import com.janilla.json.ReflectionJsonIterator;
 import com.janilla.net.Net;
 import com.janilla.persistence.ApplicationPersistenceBuilder;
 import com.janilla.persistence.Persistence;
@@ -43,8 +46,11 @@ import com.janilla.web.ApplicationHandlerBuilder;
 import com.janilla.web.Handle;
 import com.janilla.web.Render;
 import com.janilla.web.RenderableFactory;
+import com.janilla.web.Renderer;
 
 public class AddressBook {
+
+	public static final AtomicReference<AddressBook> INSTANCE = new AtomicReference<>();
 
 	public static void main(String[] args) {
 		try {
@@ -59,13 +65,14 @@ public class AddressBook {
 				}
 			}
 			var ab = new AddressBook(pp);
+
 			HttpServer s;
 			{
-				SSLContext sc;
+				SSLContext c;
 				try (var is = Net.class.getResourceAsStream("testkeys")) {
-					sc = Net.getSSLContext("JKS", is, "passphrase".toCharArray());
+					c = Net.getSSLContext("JKS", is, "passphrase".toCharArray());
 				}
-				s = new HttpServer(sc, ab.handler);
+				s = new HttpServer(c, ab.handler);
 			}
 			var p = Integer.parseInt(ab.configuration.getProperty("address-book.server.port"));
 			s.serve(new InetSocketAddress(p));
@@ -89,17 +96,22 @@ public class AddressBook {
 	public Iterable<Class<?>> types;
 
 	public AddressBook(Properties configuration) {
+		if (!INSTANCE.compareAndSet(null, this))
+			throw new IllegalStateException();
 		this.configuration = configuration;
+
 		types = Util.getPackageClasses(getClass().getPackageName()).toList();
 		factory = new Factory(types, this);
 		typeResolver = factory.create(MapAndType.DollarTypeResolver.class);
+
 		{
-			var p = configuration.getProperty("address-book.database.file");
-			if (p.startsWith("~"))
-				p = System.getProperty("user.home") + p.substring(1);
-			var pb = factory.create(ApplicationPersistenceBuilder.class, Map.of("databaseFile", Path.of(p)));
-			persistence = pb.build();
+			var f = configuration.getProperty("address-book.database.file");
+			if (f.startsWith("~"))
+				f = System.getProperty("user.home") + f.substring(1);
+			var b = factory.create(ApplicationPersistenceBuilder.class, Map.of("databaseFile", Path.of(f)));
+			persistence = b.build();
 		}
+
 		renderableFactory = new RenderableFactory();
 		handler = factory.create(ApplicationHandlerBuilder.class).build();
 	}
@@ -108,39 +120,34 @@ public class AddressBook {
 		return this;
 	}
 
-	@Handle(method = "GET", path = "(/[\\w\\d/-]*)")
-	public Index index(String path) {
-		return switch (path) {
-		case "/about" -> new Index(new RootLayout(new RootLayout.Content(new AboutPage(new AboutPage.Content()))));
-		default -> new Index(new RootLayout(null));
-		};
+	@Handle(method = "GET", path = "/")
+	public Index root(String q) {
+		var a = ContactApi.INSTANCE.get();
+		return new Index(Map.of("contacts", a.list(q)));
+	}
+
+	@Handle(method = "GET", path = "/contacts/([^/]+)(/edit)?")
+	public Index contact(String id, String edit, String q) {
+		var a = ContactApi.INSTANCE.get();
+		return new Index(Map.of("contacts", a.list(q), "contact", a.read(id)));
+	}
+
+	@Handle(method = "GET", path = "/about")
+	public Index about() {
+		return new Index(Map.of());
 	}
 
 	@Render(template = "index.html")
-	public record Index(RootLayout rootLayout) {
+	public record Index(@Render(renderer = StateRenderer.class) Map<String, Object> state) {
 	}
 
-	@Render(template = "root-layout")
-	public record RootLayout(Content content) {
+	public static class StateRenderer<T> extends Renderer<T> {
 
-		@Render(template = "root-layout.html")
-		public record Content(AboutPage aboutPage) {
-		}
-	}
-
-	@Render(template = "about-page")
-	public record AboutPage(Content content) {
-
-		public Object slot() {
-			return content != null ? "content" : false;
-		}
-
-		public boolean prerender() {
-			return content != null;
-		}
-
-		@Render(template = "about-page.html")
-		public record Content() {
+		@Override
+		public String apply(T value) {
+			var x = INSTANCE.get().factory.create(ReflectionJsonIterator.class);
+			x.setObject(value);
+			return Json.format(x);
 		}
 	}
 }

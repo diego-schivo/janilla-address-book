@@ -36,15 +36,18 @@ public class CustomMethodHandlerFactory extends MethodHandlerFactory {
 	@Override
 	protected void handle(Invocation invocation, HttpExchange exchange) {
 		var rq = exchange.getRequest();
-		if (Boolean.parseBoolean(configuration.getProperty("address-book.live-demo")) && !rq.getMethod().equals("GET"))
-			throw new HandleException(new MethodBlockedException());
 
-//		if (exchange.getRequest().getPath().startsWith("/api"))
-//			try {
-//				Thread.sleep(500);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
+		if (Boolean.parseBoolean(configuration.getProperty("address-book.live-demo"))) {
+			if (!rq.getMethod().equals("GET"))
+				throw new HandleException(new MethodBlockedException());
+		}
+
+		if (exchange.getRequest().getPath().startsWith("/api/"))
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 
 		super.handle(invocation, exchange);
 	}

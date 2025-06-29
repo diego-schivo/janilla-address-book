@@ -26,7 +26,16 @@ package com.janilla.addressbook;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.janilla.database.BTree;
+import com.janilla.database.BTreeMemory;
+import com.janilla.database.IdAndReference;
+import com.janilla.database.KeyAndData;
+import com.janilla.database.Store;
+import com.janilla.io.ByteConverter;
+import com.janilla.io.TransactionalByteChannel;
 import com.janilla.persistence.ApplicationPersistenceBuilder;
 import com.janilla.persistence.Persistence;
 import com.janilla.reflect.Factory;
@@ -39,10 +48,25 @@ public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
 
 	@Override
 	public Persistence build() {
-		var fe = Files.exists(databaseFile);
-		var p = super.build();
-		if (!fe)
-			FakeData.INSTANCE.contacts().forEach(x -> p.crud(Contact.class).create(x.withCreatedAt(Instant.now())));
-		return p;
+		var e = Files.exists(databaseFile);
+		var x = super.build();
+		if (!e) {
+			var d = SeedData.read();
+			for (var c : d.contacts()) {
+				c = c.withId(Stream.of(c.first(), c.last()).map(y -> y.toLowerCase().replace(' ', '_'))
+						.collect(Collectors.joining("-"))).withCreatedAt(Instant.now());
+				x.crud(Contact.class).create(c);
+			}
+		}
+		return x;
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	protected <ID extends Comparable<ID>> Store<ID, String> newStore(int bTreeOrder, TransactionalByteChannel channel,
+			BTreeMemory memory, KeyAndData<String> keyAndData) {
+		var x = keyAndData.key().equals("Contact") ? ByteConverter.STRING : ByteConverter.LONG;
+		return (Store<ID, String>) new Store<>(new BTree<>(bTreeOrder, channel, memory,
+				IdAndReference.byteConverter((ByteConverter) x), keyAndData.bTree()), ByteConverter.STRING);
 	}
 }

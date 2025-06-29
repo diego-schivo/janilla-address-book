@@ -30,7 +30,7 @@ export default class ContactPage extends WebComponent {
 	}
 
 	static get templateNames() {
-		return ["contact-page"];
+		return ["contact"];
 	}
 
 	constructor() {
@@ -38,48 +38,84 @@ export default class ContactPage extends WebComponent {
 	}
 
 	connectedCallback() {
-		// console.log("ContactPage.connectedCallback");
 		super.connectedCallback();
 		this.addEventListener("submit", this.handleSubmit);
 		this.addEventListener("toggle-favorite", this.handleToggleFavorite);
 	}
 
 	disconnectedCallback() {
-		// console.log("ContactPage.disconnectedCallback");
+		super.disconnectedCallback();
 		this.removeEventListener("submit", this.handleSubmit);
 		this.removeEventListener("toggle-favorite", this.handleToggleFavorite);
 	}
 
+	async updateDisplay() {
+		const s = this.state;
+		if (this.slot) {
+			const ps = this.closest("app-element").popState;
+			if (ps)
+				s.contact = ps.contact;
+
+			const hs = history.state;
+			this.appendChild(this.interpolateDom(hs.contact ? {
+				$template: "",
+				...hs.contact,
+				name: {
+					$template: hs.contact.full ? "name" : "no-name",
+					...hs.contact
+				},
+				twitter: hs.contact.twitter ? {
+					$template: "twitter",
+					...hs.contact
+				} : null,
+				notes: hs.contact.notes ? {
+					$template: "notes",
+					...hs.contact
+				} : null
+			} : { $template: "" }));
+
+			if (!s.contact || this.dataset.id != hs.contact?.id) {
+				s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+				history.replaceState({
+					...history.state,
+					contact: s.contact
+				}, "");
+				dispatchEvent(new CustomEvent("popstate"));
+			}
+		} else
+			delete s.contact;
+	}
+
 	handleSubmit = async event => {
-		// console.log("ContactPage.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const s = this.closest("root-layout").state;
+		const s = this.state;
 		switch (event.target.method) {
 			case "get":
-				history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
+				const u = new URL(`/contacts/${s.contact.id}/edit`, location.href);
+				const q = new URLSearchParams(location.search).get("q");
+				if (q)
+					u.searchParams.append("q", q);
+				history.pushState(history.state, "", u.pathname + u.search);
 				dispatchEvent(new CustomEvent("popstate"));
 				break;
 			case "post":
-				if (!confirm("Please confirm you want to delete this record."))
-					return;
-				const r = await fetch(`/api/contacts/${s.contact.id}`, { method: "DELETE" });
-				if (r.ok) {
-					delete s.contact;
-					delete s.contacts;
-					history.pushState(s, "", "/");
-					dispatchEvent(new CustomEvent("popstate"));
-				} else {
-					const t = await r.text();
-					alert(t);
+				if (confirm("Please confirm you want to delete this record.")) {
+					const r = await fetch(`/api/contacts/${s.contact.id}`, { method: "DELETE" });
+					if (r.ok) {
+						delete s.contact;
+						delete this.closest("sidebar-layout").state.contacts;
+						history.pushState(history.state, "", "/");
+						dispatchEvent(new CustomEvent("popstate"));
+					} else
+						alert(await r.text());
 				}
 				break;
 		}
 	}
 
 	handleToggleFavorite = async event => {
-		// console.log("ContactPage.handleToggleFavorite", event);
-		const s = this.closest("root-layout").state;
+		const s = this.state;
 		s.contact.favorite = event.detail.favorite;
 		this.requestDisplay();
 		const r = await fetch(`/api/contacts/${s.contact.id}/favorite`, {
@@ -89,39 +125,10 @@ export default class ContactPage extends WebComponent {
 		});
 		if (r.ok) {
 			s.contact = await r.json();
-			delete s.contacts;
-			history.pushState(s, "", "/");
+			delete this.closest("sidebar-layout").state.contacts;
+			history.pushState(history.state, "", "/");
 			dispatchEvent(new CustomEvent("popstate"));
-		} else {
-			const t = await r.text();
-			alert(t);
-		}
-	}
-
-	async updateDisplay() {
-		// console.log("ContactPage.updateDisplay");
-		const s = this.closest("root-layout").state;
-		if (this.dataset.loading != null) {
-			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-			history.replaceState(s, "");
-			// dispatchEvent(new CustomEvent("popstate"));
-			this.closest("sidebar-layout").requestDisplay();
-		} else if (this.slot === "content")
-			this.appendChild(this.interpolateDom({
-				$template: "",
-				...s.contact,
-				name: {
-					$template: s.contact.full ? "name" : "no-name",
-					...s.contact
-				},
-				twitter: s.contact.twitter ? {
-					$template: "twitter",
-					...s.contact
-				} : null,
-				notes: s.contact.notes ? {
-					$template: "notes",
-					...s.contact
-				} : null
-			}));
+		} else
+			alert(await r.text());
 	}
 }

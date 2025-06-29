@@ -26,7 +26,7 @@ import WebComponent from "./web-component.js";
 export default class SidebarLayout extends WebComponent {
 
 	static get observedAttributes() {
-		return ["data-loading", "data-path", "data-query", "slot"];
+		return ["data-href", "data-loading", "data-pending", "slot"];
 	}
 
 	static get templateNames() {
@@ -39,108 +39,51 @@ export default class SidebarLayout extends WebComponent {
 	}
 
 	connectedCallback() {
-		// console.log("SidebarLayout.connectedCallback");
 		super.connectedCallback();
 		this.shadowRoot.addEventListener("submit", this.handleSubmit);
 		this.shadowRoot.addEventListener("input", this.handleInput);
 	}
 
 	disconnectedCallback() {
-		// console.log("SidebarLayout.disconnectedCallback");
+		super.disconnectedCallback();
 		this.shadowRoot.removeEventListener("submit", this.handleSubmit);
 		this.shadowRoot.removeEventListener("input", this.handleInput);
 	}
 
-	handleInput = async event => {
-		// console.log("SidebarLayout.handleInput", event);
-		const el = event.target.closest("#q");
-		if (!el)
-			return;
-		const q1 = new URLSearchParams(location.search).get("q");
-		const q2 = el.value;
-		const u = new URL(location.href);
-		u.searchParams.set("q", q2);
-		const s = this.closest("root-layout").state;
-		delete s.contacts
-		if (!q1)
-			history.pushState(s, "", u.pathname + u.search);
-		else
-			history.replaceState(s, "", u.pathname + u.search);
-		dispatchEvent(new CustomEvent("popstate"));
-		// this.requestDisplay();
-	}
-
-	handleSubmit = async event => {
-		// console.log("SidebarLayout.handleSubmit", event);
-		const el = event.target.closest("#sidebar");
-		if (!el)
-			return;
-		event.preventDefault();
-		event.stopPropagation();
-		const s = this.closest("root-layout").state;
-		const r = await fetch("/api/contacts", {
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({})
-		});
-		if (r.ok) {
-			s.contact = await r.json();
-			delete s.contacts;
-			history.pushState(s, "", `/contacts/${s.contact.id}/edit`);
-			dispatchEvent(new CustomEvent("popstate"));
-		} else {
-			const t = await r.text();
-			alert(t);
-		}
-	}
-
 	async updateDisplay() {
-		// console.log("SidebarLayout.updateDisplay");
-		const s = this.closest("root-layout").state;
-		if (this.slot === "content") {
-			const m = this.dataset.path.match(/\/contacts\/(\d+)(\/edit)?/) ?? [];
-			const o1 = {
-				contactPage: (() => {
-					const a = m[1] && !m[2];
+		const s = this.state;
+		if (this.slot) {
+			const ps = this.closest("app-element").popState;
+			if (ps)
+				s.contacts = ps.contacts;
+
+			const hs = history.state;
+			const c = location.pathname.match(/\/contacts\/([^/]+)(\/edit)?/);
+			const q = new URLSearchParams(location.search).get("q");
+			const o = {
+				$template: "",
+				search: (() => {
+					const l = q && this.dataset.loading != null;
 					return {
-						$template: "contact-page",
-						slot: a ? (s.contact ? "content" : "new-content") : null,
-						loading: a && m[1] != s.contact?.id,
-						id: a ? m[1] : null
+						input: {
+							class: l ? "loading" : null,
+							value: q
+						},
+						spinner: { hidden: !l }
 					};
 				})(),
-				editContact: (() => {
-					const a = m[1] && m[2];
-					return {
-						$template: "edit-contact",
-						slot: a ? (s.contact ? "content" : "new-content") : null,
-						loading: a && m[1] != s.contact?.id,
-						id: a ? m[1] : null
-					};
-				})()
-			};
-			const o2 = {
-				homePage: {
-					$template: "home-page",
-					slot: Object.values(o1).some(x => x.slot === "content") ? null : "content"
-				},
-				...o1
-			};
-			const df = this.interpolateDom({
-				$template: "",
-				search: {
-					input: {
-						class: this.dataset.query && this.dataset.loading != null ? "loading" : null,
-						value: this.dataset.query
-					},
-					spinner: { hidden: !this.dataset.query || this.dataset.loading == null }
-				},
 				contacts: {
-					$template: s.contacts?.length ? "contacts" : "no-contacts",
-					items: s.contacts?.map(x => ({
+					$template: hs.contacts?.length ? "contacts" : "no-contacts",
+					items: hs.contacts?.map(x => ({
 						$template: "item",
 						...x,
-						class: x.id === s.contact?.id ? "active"
+						href: (() => {
+							const u = new URL(`/contacts/${x.id}`, location.href);
+							if (q)
+								u.searchParams.append("q", q);
+							return u.pathname + u.search;
+						})(),
+						class: x.id === hs.contact?.id ? "active"
 							: `${location.pathname}/`.startsWith(`/contacts/${x.id}/`) ? "pending" : null,
 						name: {
 							$template: x.full ? "name" : "no-name",
@@ -149,19 +92,97 @@ export default class SidebarLayout extends WebComponent {
 						favorite: x.favorite ? { $template: "favorite" } : null
 					}))
 				},
-				detail: { class: Object.values(o2).some(x => x.loading) ? "loading" : null },
-				...o2
-			});
+				home: {
+					$template: "home",
+					slot: !(c && hs.contact) ? "content" : null
+				},
+				contact: (() => {
+					const x = {
+						$template: "contact",
+						slot: c && !c[2] ? (hs.contact ? "content" : "new-content") : null
+					};
+					if (x.slot) {
+						x.id = c[1];
+						const ce = this.querySelector("contact-element");
+						x.loading = x.id != (ce?.state?.contact ?? hs?.contact)?.id;
+					}
+					return x;
+				})(),
+				editContact: (() => {
+					const x = {
+						$template: "edit-contact",
+						slot: c && c[2] ? (hs.contact ? "content" : "new-content") : null
+					};
+					if (x.slot) {
+						x.id = c[1];
+						const ec = this.querySelector("edit-contact");
+						x.loading = x.id != (ec?.state?.contact ?? hs?.contact)?.id;
+					}
+					return x;
+				})()
+			};
+			o.detail = { class: ["contact", "editContact"].some(x => o[x].loading) ? "loading" : null };
+			const df = this.interpolateDom(o);
 			this.shadowRoot.append(...df.querySelectorAll("link, #sidebar, #detail"));
 			this.appendChild(df);
+
+			if (!s.contacts) {
+				const u = new URL("/api/contacts", location.href);
+				if (q)
+					u.searchParams.append("query", q);
+				s.contacts = await (await fetch(u)).json();
+				history.replaceState({
+					...history.state,
+					contacts: s.contacts
+				}, "");
+				dispatchEvent(new CustomEvent("popstate"));
+			}
+		} else
+			delete s.contacts;
+	}
+
+	handleInput = async event => {
+		const el = event.target.closest("#q");
+		if (el) {
+			const q = el.value;
+			const q0 = new URLSearchParams(location.search).get("q");
+			if (q != q0) {
+				if (typeof this.inputTimeout === "number")
+					clearTimeout(this.inputTimeout);
+				this.inputTimeout = setTimeout(() => {
+					delete this.state.contacts;
+					const u = new URL(location.href);
+					u.searchParams.set("q", q);
+					if (!q0)
+						history.pushState(history.state, "", u.pathname + u.search);
+					else
+						history.replaceState(history.state, "", u.pathname + u.search);
+					dispatchEvent(new CustomEvent("popstate"));
+				}, 500);
+			}
 		}
-		if (this.dataset.loading != null) {
-			const u = new URL("/api/contacts", location.href);
-			if (this.dataset.query)
-				u.searchParams.append("query", this.dataset.query);
-			s.contacts = await (await fetch(u)).json();
-			history.replaceState(s, "");
-			dispatchEvent(new CustomEvent("popstate"));
+	}
+
+	handleSubmit = async event => {
+		const el = event.target.closest("#sidebar");
+		if (el) {
+			event.preventDefault();
+			event.stopPropagation();
+			const r = await fetch("/api/contacts", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({})
+			});
+			if (r.ok) {
+				const c = await r.json();
+				delete this.state.contacts;
+				history.pushState({
+					...history.state,
+					contact: c
+				}, "", `/contacts/${c.id}/edit`);
+				dispatchEvent(new CustomEvent("popstate"));
+			} else
+				alert(await r.text());
 		}
 	}
 }

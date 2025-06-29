@@ -27,6 +27,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.janilla.persistence.Persistence;
 import com.janilla.reflect.Reflection;
@@ -36,59 +38,71 @@ import com.janilla.web.NotFoundException;
 
 public class ContactApi {
 
+	public static final AtomicReference<ContactApi> INSTANCE = new AtomicReference<>();
+
 	public Persistence persistence;
+
+	public ContactApi() {
+		if (!INSTANCE.compareAndSet(null, this))
+			throw new IllegalStateException();
+	}
 
 	@Handle(method = "GET", path = "/api/contacts")
 	public List<Contact> list(@Bind("query") String query) {
-		var cc = persistence.crud(Contact.class);
-		var qcc = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
-		return cc.read(qcc != null ? cc.filter("full", x -> Arrays.stream(((String) x).split(" ")).anyMatch(y -> {
+		var c = persistence.crud(Contact.class);
+		var q = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
+		return c.read(q != null ? c.filter("full", x -> Arrays.stream(((String) x).split(" ")).anyMatch(y -> {
 			var s = y.toLowerCase();
 			var i = -1;
-			for (var c : qcc) {
-				i = s.indexOf(c, i + 1);
+			for (var z : q) {
+				i = s.indexOf(z, i + 1);
 				if (i == -1)
 					return false;
 			}
 			return true;
-		})) : cc.list());
+		})) : c.list());
 	}
 
 	@Handle(method = "POST", path = "/api/contacts")
 	public Contact create(Contact contact) {
-		return persistence.crud(Contact.class).create(contact.withCreatedAt(Instant.now()));
+		var x = contact;
+		var l = 1L + Integer.MAX_VALUE + ThreadLocalRandom.current().nextLong(Long.MAX_VALUE - Integer.MAX_VALUE);
+		var s = Long.toString(l, 36);
+		s = s.length() > 7 ? s.substring(s.length() - 7, s.length()) : s;
+		x = x.withId(s).withCreatedAt(Instant.now());
+		return persistence.crud(Contact.class).create(x);
 	}
 
-	@Handle(method = "GET", path = "/api/contacts/(\\d+)")
-	public Contact read(long id) {
-		var c = persistence.crud(Contact.class).read(id);
-		if (c == null)
+	@Handle(method = "GET", path = "/api/contacts/([^/]+)")
+	public Contact read(String id) {
+		var x = persistence.crud(Contact.class).read(id);
+		if (x == null)
 			throw new NotFoundException("contact " + id);
-		return c;
+		return x;
 	}
 
-	@Handle(method = "PUT", path = "/api/contacts/(\\d+)")
-	public Contact update(long id, Contact contact) {
-		var c = persistence.crud(Contact.class).update(id,
-				x -> Reflection.copy(contact, x, y -> !Set.of("id", "createdAt").contains(y)));
-		if (c == null)
+	@Handle(method = "PUT", path = "/api/contacts/([^/]+)")
+	public Contact update(String id, Contact contact) {
+		var x = persistence.crud(Contact.class).update(id,
+				y -> Reflection.copy(contact, y, z -> !Set.of("id", "createdAt").contains(z)));
+		if (x == null)
 			throw new NotFoundException("contact " + id);
-		return c;
+		return x;
 	}
 
-	@Handle(method = "DELETE", path = "/api/contacts/(\\d+)")
-	public Contact delete(long id) {
-		var c = persistence.crud(Contact.class).delete(id);
-		if (c == null)
+	@Handle(method = "DELETE", path = "/api/contacts/([^/]+)")
+	public Contact delete(String id) {
+		var x = persistence.crud(Contact.class).delete(id);
+		if (x == null)
 			throw new NotFoundException("contact " + id);
-		return c;
+		return x;
 	}
 
-	@Handle(method = "PUT", path = "/api/contacts/(\\d+)/favorite")
-	public Contact favorite(long id, Boolean value) {
-		var c = persistence.crud(Contact.class).update(id, x -> x.withFavorite(value));
-		if (c == null)
+	@Handle(method = "PUT", path = "/api/contacts/([^/]+)/favorite")
+	public Contact favorite(String id, Boolean value) {
+		var x = persistence.crud(Contact.class).update(id, y -> y.withFavorite(value));
+		if (x == null)
 			throw new NotFoundException("contact " + id);
-		return c;
+		return x;
 	}
 }

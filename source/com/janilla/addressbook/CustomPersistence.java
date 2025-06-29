@@ -23,34 +23,22 @@
  */
 package com.janilla.addressbook;
 
-import java.time.Instant;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.function.Function;
 
+import com.janilla.database.Database;
+import com.janilla.json.MapAndType.TypeResolver;
 import com.janilla.persistence.Entity;
-import com.janilla.persistence.Index;
-import com.janilla.persistence.Store;
+import com.janilla.persistence.Persistence;
 
-@Store
-@Index(sort = "last")
-public record Contact(String id, Instant createdAt, String avatar, String first, String last, String twitter,
-		Boolean favorite) implements Entity<String> {
+public class CustomPersistence extends Persistence {
 
-	@Index
-	public String full() {
-		var s = Stream.of(first, last).filter(x -> x != null && !x.isEmpty()).collect(Collectors.joining(" "));
-		return !s.isEmpty() ? s : null;
+	public CustomPersistence(Database database, Iterable<Class<? extends Entity<?>>> types, TypeResolver typeResolver) {
+		super(database, types, typeResolver);
 	}
 
-	public Contact withId(String id) {
-		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
-	}
-
-	public Contact withCreatedAt(Instant createdAt) {
-		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
-	}
-
-	public Contact withFavorite(Boolean favorite) {
-		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
+	@Override
+	protected <ID extends Comparable<ID>> Function<Map<String, Object>, ID> nextId(Class<?> type) {
+		return type == Contact.class ? null : super.nextId(type);
 	}
 }

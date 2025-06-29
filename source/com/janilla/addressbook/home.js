@@ -23,14 +23,14 @@
  */
 import WebComponent from "./web-component.js";
 
-export default class HomePage extends WebComponent {
+export default class Home extends WebComponent {
 
 	static get observedAttributes() {
 		return ["slot"];
 	}
 
 	static get templateNames() {
-		return ["home-page"];
+		return ["home"];
 	}
 
 	constructor() {
@@ -38,8 +38,7 @@ export default class HomePage extends WebComponent {
 	}
 
 	async updateDisplay() {
-		// console.log("HomePage.updateDisplay");
-		if (this.slot === "content")
-			this.appendChild(this.interpolateDom({ $template: "" }));
+		if (this.slot)
+			await super.updateDisplay();
 	}
 }

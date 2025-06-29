@@ -38,35 +38,32 @@ export default class ToggleFavorite extends WebComponent {
 	}
 
 	connectedCallback() {
-		// console.log("FavoriteButton.connectedCallback");
 		super.connectedCallback();
 		this.addEventListener("submit", this.handleSubmit);
 	}
 
 	disconnectedCallback() {
-		// console.log("FavoriteButton.disconnectedCallback");
+		super.disconnectedCallback();
 		this.removeEventListener("submit", this.handleSubmit);
 	}
 
-	handleSubmit = event => {
-		// console.log("FavoriteButton.handleSubmit", event);
-		event.preventDefault();
-		event.stopPropagation();
-		const c = this.dataset.checked !== undefined;
-		this.dispatchEvent(new CustomEvent("toggle-favorite", {
-			bubbles: true,
-			detail: { favorite: !c }
-		}));
-	}
-
 	async updateDisplay() {
-		// console.log("FavoriteButton.updateDisplay");
 		const c = this.dataset.checked !== undefined;
 		this.appendChild(this.interpolateDom({
 			$template: "",
 			label: c ? "Remove from favorites" : "Add to favorites",
 			value: (!c).toString(),
 			text: c ? "★" : "☆"
+		}));
+	}
+
+	handleSubmit = event => {
+		event.preventDefault();
+		event.stopPropagation();
+		const c = this.dataset.checked !== undefined;
+		this.dispatchEvent(new CustomEvent("toggle-favorite", {
+			bubbles: true,
+			detail: { favorite: !c }
 		}));
 	}
 }

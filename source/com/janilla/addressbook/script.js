@@ -21,33 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import WebComponent from "./web-component.js";
+import About from "./about.js";
+import App from "./app.js";
+import Contact from "./contact.js";
+import EditContact from "./edit-contact.js";
+import Home from "./home.js";
+import SidebarLayout from "./sidebar-layout.js";
+import ToggleFavorite from "./toggle-favorite.js";
 
-export default class AboutPage extends WebComponent {
-
-	static get observedAttributes() {
-		return ["slot"];
-	}
-
-	static get templateNames() {
-		return ["about-page"];
-	}
-
-	constructor() {
-		super();
-	}
-
-	connectedCallback() {
-		// console.log("AboutPage.connectedCallback");
-		if (this.dataset.prerender != null)
-			this.remove();
-		else
-			super.connectedCallback();
-	}
-
-	async updateDisplay() {
-		// console.log("HomePage.updateDisplay");
-		if (this.slot === "content")
-			this.appendChild(this.interpolateDom({ $template: "" }));
-	}
-}
+customElements.define("about-element", About);
+customElements.define("app-element", App);
+customElements.define("contact-element", Contact);
+customElements.define("edit-contact", EditContact);
+customElements.define("home-element", Home);
+customElements.define("sidebar-layout", SidebarLayout);
+customElements.define("toggle-favorite", ToggleFavorite);

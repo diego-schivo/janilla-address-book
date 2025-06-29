@@ -21,36 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook;
+import WebComponent from "./web-component.js";
 
-import java.time.Instant;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+export default class AboutPage extends WebComponent {
 
-import com.janilla.persistence.Entity;
-import com.janilla.persistence.Index;
-import com.janilla.persistence.Store;
-
-@Store
-@Index(sort = "last")
-public record Contact(String id, Instant createdAt, String avatar, String first, String last, String twitter,
-		Boolean favorite) implements Entity<String> {
-
-	@Index
-	public String full() {
-		var s = Stream.of(first, last).filter(x -> x != null && !x.isEmpty()).collect(Collectors.joining(" "));
-		return !s.isEmpty() ? s : null;
+	static get observedAttributes() {
+		return ["slot"];
 	}
 
-	public Contact withId(String id) {
-		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
+	static get templateNames() {
+		return ["about"];
 	}
 
-	public Contact withCreatedAt(Instant createdAt) {
-		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
+	constructor() {
+		super();
 	}
 
-	public Contact withFavorite(Boolean favorite) {
-		return new Contact(id, createdAt, avatar, first, last, twitter, favorite);
+	async updateDisplay() {
+		if (this.slot)
+			await super.updateDisplay();
 	}
 }

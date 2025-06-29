@@ -38,23 +38,46 @@ export default class EditContact extends WebComponent {
 	}
 
 	connectedCallback() {
-		// console.log("EditContact.connectedCallback");
 		super.connectedCallback();
 		this.addEventListener("submit", this.handleSubmit);
 		this.addEventListener("click", this.handleClick);
 	}
 
 	disconnectedCallback() {
-		// console.log("EditContact.disconnectedCallback");
+		super.disconnectedCallback();
 		this.removeEventListener("submit", this.handleSubmit);
 		this.removeEventListener("click", this.handleClick);
 	}
 
+	async updateDisplay() {
+		const s = this.state;
+		if (this.slot) {
+			const ps = this.closest("app-element").popState;
+			if (ps)
+				s.contact = ps.contact;
+
+			const hs = history.state;
+			this.appendChild(this.interpolateDom({
+				$template: "",
+				...hs.contact
+			}));
+
+			if (!s.contact || this.dataset.id != hs.contact?.id) {
+				s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
+				history.replaceState({
+					...history.state,
+					contact: s.contact
+				}, "");
+				dispatchEvent(new CustomEvent("popstate"));
+			}
+		} else
+			delete s.contact;
+	}
+
 	handleSubmit = async event => {
-		// console.log("EditContact.handleSubmit", event);
 		event.preventDefault();
 		event.stopPropagation();
-		const s = this.closest("root-layout").state;
+		const s = this.state;
 		const r = await fetch(`/api/contacts/${s.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
@@ -62,34 +85,17 @@ export default class EditContact extends WebComponent {
 		});
 		if (r.ok) {
 			s.contact = await r.json();
-			delete s.contacts;
-			history.pushState(s, "", `/contacts/${s.contact.id}`);
+			delete this.closest("sidebar-layout").state.contacts;
+			history.pushState(history.state, "", `/contacts/${s.contact.id}`);
 			dispatchEvent(new CustomEvent("popstate"));
-		} else {
-			const t = await r.text();
-			alert(t);
+		} else
+			alert(await r.text());
+	}
+
+	handleClick = event => {
+		if (event.target.matches('[type="button"]')) {
+			event.stopPropagation();
+			history.back();
 		}
-	}
-
-	handleClick = async event => {
-		// console.log("EditContact.handleClick", event);
-		if (!event.target.matches('[type="button"]'))
-			return;
-		event.stopPropagation();
-		history.back();
-	}
-
-	async updateDisplay() {
-		// console.log("EditContact.updateDisplay");
-		const s = this.closest("root-layout").state;
-		if (this.dataset.loading != null) {
-			s.contact = await (await fetch(`/api/contacts/${this.dataset.id}`)).json();
-			history.replaceState(s, "");
-			dispatchEvent(new CustomEvent("popstate"));
-		} else if (this.slot === "content")
-			this.appendChild(this.interpolateDom({
-				$template: "",
-				...s.contact
-			}));
 	}
 }

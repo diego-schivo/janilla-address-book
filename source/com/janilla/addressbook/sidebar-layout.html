@@ -1,4 +1,4 @@
-<link href="/app.css" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />"/style.css" rel="stylesheet" />
 <div id="sidebar">
 	<h1>
 		<a href="/about">React Router Contacts</a>
@@ -32,6 +32,10 @@
 	<slot name="content"></slot>
 </div>
 
+<!--${home}-->
+<!--${contact}-->
+<!--${editContact}-->
+
 <template id="contacts">
 	<ul>
 		<!--${items}-->
@@ -46,7 +50,7 @@
 
 <template id="item">
 	<li>
-		<a href="/contacts/${id}" class="${class}"><!--${name}--><!--${favorite}--></a>
+		<a href="${href}" class="${class}"><!--${name}--><!--${favorite}--></a>
 	</li>
 </template>
 
@@ -56,18 +60,14 @@
 
 <template id="favorite"><span>★</span></template>
 
-<!--${homePage}-->
-<!--${contactPage}-->
-<!--${editContact}-->
-
-<template id="home-page">
-	<home-page slot="${slot}"></home-page>
+<template id="home">
+	<home-element slot="${slot}"></home-element>
 </template>
 
-<template id="contact-page">
-	<contact-page slot="${slot}" data-loading="${loading}" data-id="${id}"></contact-page>
+<template id="contact">
+	<contact-element slot="${slot}" data-loading="${loading}" data-id="${id}"></contact-element>
 </template>
 
 <template id="edit-contact">
-	<edit-contact slot="${slot}"></edit-contact>
+	<edit-contact slot="${slot}" data-loading="${loading}" data-id="${id}"></edit-contact>
 </template>
