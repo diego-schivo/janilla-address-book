@@ -5,6 +5,7 @@
 	<groupId>com.janilla</groupId>
 	<artifactId>janilla-address-book</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
 	<dependencies>
 		<dependency>
 			<groupId>com.janilla</groupId>
@@ -12,6 +13,24 @@
 			<version>6.0.0</version>
 		</dependency>
 	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.janilla</groupId>
+				<artifactId>janilla-address-book-main</artifactId>
+				<version>1.0.0-SNAPSHOT</version>
+			</dependency>
+			<dependency>
+				<groupId>com.janilla</groupId>
+				<artifactId>janilla-address-book-test</artifactId>
+				<version>1.0.0-SNAPSHOT</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<modules>
+		<module>main</module>
+		<module>test</module>
+	</modules>
 	<properties>
 		<maven.compiler.enablePreview>true</maven.compiler.enablePreview>
 		<maven.compiler.parameters>true</maven.compiler.parameters>
@@ -32,26 +51,27 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.5.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
 				<configuration>
-					<executable>java</executable>
-					<arguments>
-						<argument>--enable-preview</argument>
-						<argument>-p</argument>
-						<modulepath/>
-						<argument>-m</argument>
-						<argument>com.janilla.addressbook/com.janilla.addressbook.AddressBook</argument>
-					</arguments>
+					<mainClass>com.janilla.addressbook.main.AddressBook</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>exec-maven-plugin</artifactId>
+					<version>3.5.0</version>
+					<executions>
+						<execution>
+							<goals>
+								<goal>exec</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	<name>Janilla Address Book</name>
 	<description></description>

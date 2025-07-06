@@ -86,7 +86,10 @@ export default class EditContact extends WebComponent {
 		if (r.ok) {
 			s.contact = await r.json();
 			delete this.closest("sidebar-layout").state.contacts;
-			history.pushState(history.state, "", `/contacts/${s.contact.id}`);
+			history.pushState({
+				...history.state,
+				contact: s.contact
+			}, "", `/contacts/${s.contact.id}`);
 			dispatchEvent(new CustomEvent("popstate"));
 		} else
 			alert(await r.text());
