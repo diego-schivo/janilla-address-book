@@ -26,10 +26,10 @@ package com.janilla.addressbook.testing;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
@@ -37,12 +37,14 @@ import com.janilla.addressbook.fullstack.AddressBookFullstack;
 import com.janilla.http.HttpExchange;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
-import com.janilla.json.MapAndType;
+import com.janilla.json.DollarTypeResolver;
+import com.janilla.json.TypeResolver;
 import com.janilla.net.Net;
 import com.janilla.reflect.Factory;
 import com.janilla.util.Util;
-import com.janilla.web.ApplicationHandlerBuilder;
+import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
+import com.janilla.web.NotFoundException;
 import com.janilla.web.Render;
 
 @Render(template = "index.html")
@@ -86,27 +88,32 @@ public class AddressBookTest {
 
 	public HttpHandler handler;
 
-	public MapAndType.TypeResolver typeResolver;
+	public TypeResolver typeResolver;
 
-	public Set<Class<?>> types;
+	public List<Class<?>> types;
 
 	public AddressBookTest(Properties configuration) {
 		this.configuration = configuration;
 
-		types = Util.getPackageClasses(getClass().getPackageName()).collect(Collectors.toSet());
+		types = Util.getPackageClasses(getClass().getPackageName()).toList();
 		factory = new Factory(types, this);
-		typeResolver = factory.create(MapAndType.DollarTypeResolver.class);
+		typeResolver = factory.create(DollarTypeResolver.class);
 
 		main = new AddressBookFullstack(configuration);
 
 		{
-			var b = factory.create(ApplicationHandlerBuilder.class);
-			var h = b.build();
+			var f = factory.create(ApplicationHandlerFactory.class);
 			handler = x -> {
 				var ex = (HttpExchange) x;
 //				System.out.println(
-//						"AddressBookTest, " + ex.getRequest().getPath() + ", Test.ongoing=" + Test.ongoing.get());
-				var h2 = Test.ONGOING.get() && !ex.getRequest().getPath().startsWith("/test/") ? main.handler : h;
+//						"AddressBookTest, " + ex.request().getPath() + ", Test.ongoing=" + Test.ongoing.get());
+				var h2 = Test.ONGOING.get() && !ex.request().getPath().startsWith("/test/") ? main.handler
+						: (HttpHandler) y -> {
+							var h = f.createHandler(Objects.requireNonNullElse(y.exception(), y.request()));
+							if (h == null)
+								throw new NotFoundException(y.request().getMethod() + " " + y.request().getTarget());
+							return h.handle(y);
+						};
 				return h2.handle(ex);
 			};
 		}

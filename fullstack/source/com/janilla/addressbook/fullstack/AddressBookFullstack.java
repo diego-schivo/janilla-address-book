@@ -26,10 +26,9 @@ package com.janilla.addressbook.fullstack;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
@@ -38,7 +37,8 @@ import com.janilla.addressbook.frontend.AddressBookFrontend;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpRequest;
 import com.janilla.http.HttpServer;
-import com.janilla.json.MapAndType;
+import com.janilla.json.DollarTypeResolver;
+import com.janilla.json.TypeResolver;
 import com.janilla.net.Net;
 import com.janilla.reflect.Factory;
 import com.janilla.util.Util;
@@ -88,9 +88,9 @@ public class AddressBookFullstack {
 
 	public HttpHandler handler;
 
-	public MapAndType.TypeResolver typeResolver;
+	public TypeResolver typeResolver;
 
-	public Set<Class<?>> types;
+	public List<Class<?>> types;
 
 	public AddressBookFullstack(Properties configuration) {
 		if (!INSTANCE.compareAndSet(null, this))
@@ -98,13 +98,13 @@ public class AddressBookFullstack {
 		this.configuration = configuration;
 
 		types = Util.getPackageClasses(getClass().getPackageName()).filter(x -> !x.getPackageName().endsWith(".test"))
-				.collect(Collectors.toSet());
+				.toList();
 		factory = new Factory(types, this);
-		typeResolver = factory.create(MapAndType.DollarTypeResolver.class);
+		typeResolver = factory.create(DollarTypeResolver.class);
 
 		handler = x -> {
-//			System.out.println("AddressBookFullstack, " + x.getRequest().getPath());
-			var o = x.getException() != null ? x.getException() : x.getRequest();
+//			System.out.println("AddressBookFullstack, " + x.request().getPath());
+			var o = x.exception() != null ? x.exception() : x.request();
 			var h = switch (o) {
 			case HttpRequest rq -> rq.getPath().startsWith("/api/") ? backend.handler : frontend.handler;
 			case Exception _ -> backend.handler;

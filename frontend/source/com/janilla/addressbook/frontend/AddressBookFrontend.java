@@ -29,25 +29,27 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
 import com.janilla.http.HttpClient;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
+import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.Json;
-import com.janilla.json.MapAndType;
 import com.janilla.json.ReflectionJsonIterator;
+import com.janilla.json.TypeResolver;
 import com.janilla.net.Net;
 import com.janilla.reflect.Factory;
 import com.janilla.util.Util;
-import com.janilla.web.ApplicationHandlerBuilder;
+import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
+import com.janilla.web.NotFoundException;
 import com.janilla.web.Render;
 import com.janilla.web.Renderer;
 
@@ -94,18 +96,27 @@ public class AddressBookFrontend {
 
 	public HttpClient httpClient;
 
-	public MapAndType.TypeResolver typeResolver;
+	public TypeResolver typeResolver;
 
-	public Set<Class<?>> types;
+	public List<Class<?>> types;
 
 	public AddressBookFrontend(Properties configuration) {
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
 		this.configuration = configuration;
-		types = Util.getPackageClasses(AddressBookFrontend.class.getPackageName()).collect(Collectors.toSet());
+		types = Util.getPackageClasses(AddressBookFrontend.class.getPackageName()).toList();
 		factory = new Factory(types, this);
-		typeResolver = factory.create(MapAndType.DollarTypeResolver.class);
-		handler = factory.create(ApplicationHandlerBuilder.class).build();
+		typeResolver = factory.create(DollarTypeResolver.class);
+
+		{
+			var f = factory.create(ApplicationHandlerFactory.class);
+			handler = x -> {
+				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
+				if (h == null)
+					throw new NotFoundException(x.request().getMethod() + " " + x.request().getTarget());
+				return h.handle(x);
+			};
+		}
 
 		{
 			SSLContext c;
@@ -159,9 +170,8 @@ public class AddressBookFrontend {
 
 		@Override
 		public String apply(T value) {
-			var x = INSTANCE.get().factory.create(ReflectionJsonIterator.class);
-			x.setObject(value);
-			return Json.format(x);
+			return Json.format(INSTANCE.get().factory.create(ReflectionJsonIterator.class,
+					Map.of("object", value, "includeType", false)));
 		}
 	}
 }

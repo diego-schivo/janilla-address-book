@@ -23,22 +23,25 @@
  */
 package com.janilla.addressbook.frontend;
 
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
 
+import com.janilla.http.HttpHandlerFactory;
 import com.janilla.reflect.Factory;
-import com.janilla.web.ApplicationHandlerBuilder;
-import com.janilla.web.ResourceHandlerFactory;
-import com.janilla.web.WebHandlerFactory;
+import com.janilla.web.ApplicationHandlerFactory;
+import com.janilla.web.FileHandlerFactory;
 
-public class CustomHandlerBuilder extends ApplicationHandlerBuilder {
+public class CustomHandlerBuilder extends ApplicationHandlerFactory {
 
-	public CustomHandlerBuilder(Factory factory) {
-		super(factory);
+	public CustomHandlerBuilder(Factory factory, Collection<Method> methods, Collection<Path> files) {
+		super(factory, methods, files);
 	}
 
 	@Override
-	protected WebHandlerFactory buildResourceHandlerFactory() {
-		return factory.create(ResourceHandlerFactory.class, Map.of("packages",
+	protected HttpHandlerFactory buildFileHandlerFactory() {
+		return factory.create(FileHandlerFactory.class, Map.of("packages",
 				new String[] { "com.janilla.frontend", AddressBookFrontend.class.getPackageName() }));
 	}
 }

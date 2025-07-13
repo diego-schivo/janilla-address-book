@@ -23,12 +23,15 @@
  */
 package com.janilla.addressbook.testing;
 
+import java.util.Map;
+
 import javax.net.ssl.SSLContext;
 
 import com.janilla.addressbook.fullstack.AddressBookFullstack;
 import com.janilla.http.HttpExchange;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpRequest;
+import com.janilla.http.HttpResponse;
 import com.janilla.http.HttpServer;
 
 public class CustomHttpServer extends HttpServer {
@@ -40,9 +43,9 @@ public class CustomHttpServer extends HttpServer {
 	}
 
 	@Override
-	protected HttpExchange createExchange(HttpRequest request) {
+	protected HttpExchange createExchange(HttpRequest request, HttpResponse response) {
 		return Test.ONGOING.get() // && request.getPath().startsWith("/api/")
-				? main.factory.create(HttpExchange.class)
-				: super.createExchange(request);
+				? main.factory.create(HttpExchange.class, Map.of("request", request, "response", response))
+				: super.createExchange(request, response);
 	}
 }

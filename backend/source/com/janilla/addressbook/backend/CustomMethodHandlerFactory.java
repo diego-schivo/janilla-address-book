@@ -23,17 +23,18 @@
  */
 package com.janilla.addressbook.backend;
 
+import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import com.janilla.http.HttpExchange;
+import com.janilla.http.HttpHandlerFactory;
 import com.janilla.web.HandleException;
 import com.janilla.web.MethodHandlerFactory;
 import com.janilla.web.RenderableFactory;
-import com.janilla.web.WebHandlerFactory;
 
 public class CustomMethodHandlerFactory extends MethodHandlerFactory {
 
@@ -41,18 +42,18 @@ public class CustomMethodHandlerFactory extends MethodHandlerFactory {
 
 	public Properties configuration;
 
-	public CustomMethodHandlerFactory(Set<Class<?>> types, Function<Class<?>, Object> targetResolver,
+	public CustomMethodHandlerFactory(Collection<Method> methods, Function<Class<?>, Object> targetResolver,
 			Comparator<Invocation> invocationComparator, RenderableFactory renderableFactory,
-			WebHandlerFactory rootFactory) {
-		super(types, targetResolver, invocationComparator, renderableFactory, rootFactory);
+			HttpHandlerFactory rootFactory) {
+		super(methods, targetResolver, invocationComparator, renderableFactory, rootFactory);
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
 	}
 
 	@Override
 	protected boolean handle(Invocation invocation, HttpExchange exchange) {
-		var rq = exchange.getRequest();
-		var rs = exchange.getResponse();
+		var rq = exchange.request();
+		var rs = exchange.response();
 
 		if (Boolean.parseBoolean(configuration.getProperty("address-book.live-demo"))) {
 			if (!rq.getMethod().equals("GET"))

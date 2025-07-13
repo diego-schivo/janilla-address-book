@@ -39,7 +39,7 @@ public class Cors {
 		var o = configuration.getProperty("address-book.api.cors.origin");
 		var m = CustomMethodHandlerFactory.INSTANCE.get().resolveInvocables(request.getPath())
 				.flatMap(x -> x.methodHandles().keySet().stream()).map(x -> x.getAnnotation(Handle.class).method())
-				.collect(Collectors.toSet());
+				.toList();
 		var h = configuration.getProperty("address-book.api.cors.headers");
 
 		response.setStatus(204);
