@@ -29,24 +29,27 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
 
 import com.janilla.http.HttpClient;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
+import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.Json;
 import com.janilla.json.ReflectionJsonIterator;
 import com.janilla.json.TypeResolver;
 import com.janilla.net.Net;
+import com.janilla.reflect.ClassAndMethod;
 import com.janilla.reflect.Factory;
-import com.janilla.util.Util;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
 import com.janilla.web.NotFoundException;
@@ -59,30 +62,34 @@ public class AddressBookFrontend {
 
 	public static void main(String[] args) {
 		try {
-			var pp = new Properties();
-			try (var s1 = AddressBookFrontend.class.getResourceAsStream("configuration.properties")) {
-				pp.load(s1);
+			AddressBookFrontend a;
+			{
+				var c = new Properties();
+				try (var x = AddressBookFrontend.class.getResourceAsStream("configuration.properties")) {
+					c.load(x);
+				}
 				if (args.length > 0) {
-					var p = args[0];
-					if (p.startsWith("~"))
-						p = System.getProperty("user.home") + p.substring(1);
-					try (var s2 = Files.newInputStream(Path.of(p))) {
-						pp.load(s2);
+					var f = args[0];
+					if (f.startsWith("~"))
+						f = System.getProperty("user.home") + f.substring(1);
+					try (var x = Files.newInputStream(Path.of(f))) {
+						c.load(x);
 					}
 				}
+				a = new AddressBookFrontend(c);
 			}
-			var x = new AddressBookFrontend(pp);
 
 			HttpServer s;
 			{
 				SSLContext c;
-				try (var is = Net.class.getResourceAsStream("testkeys")) {
-					c = Net.getSSLContext("JKS", is, "passphrase".toCharArray());
+				try (var x = Net.class.getResourceAsStream("testkeys")) {
+					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
-				s = new HttpServer(c, x.handler);
+				var p = Integer.parseInt(a.configuration.getProperty("address-book.frontend.server.port"));
+				s = a.factory.create(HttpServer.class,
+						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
-			var p = Integer.parseInt(x.configuration.getProperty("address-book.frontend.server.port"));
-			s.serve(new InetSocketAddress(p));
+			s.serve();
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
@@ -104,12 +111,18 @@ public class AddressBookFrontend {
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
 		this.configuration = configuration;
-		types = Util.getPackageClasses(AddressBookFrontend.class.getPackageName()).toList();
+		types = Java.getPackageClasses(AddressBookFrontend.class.getPackageName());
 		factory = new Factory(types, this);
 		typeResolver = factory.create(DollarTypeResolver.class);
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class);
+			var f = factory.create(ApplicationHandlerFactory.class,
+					Map.of("methods", types.stream().flatMap(
+							x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y)))
+							.toList(), "files",
+							Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
+									.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile))
+									.toList()));
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
 				if (h == null)
@@ -120,8 +133,8 @@ public class AddressBookFrontend {
 
 		{
 			SSLContext c;
-			try (var is = Net.class.getResourceAsStream("testkeys")) {
-				c = Net.getSSLContext("JKS", is, "passphrase".toCharArray());
+			try (var x = Net.class.getResourceAsStream("testkeys")) {
+				c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
@@ -155,15 +168,15 @@ public class AddressBookFrontend {
 	public record Index(String apiUrl, @Render(renderer = StateRenderer.class) Map<String, Object> state) {
 	}
 
+	protected Object contact(String id) {
+		var u = configuration.getProperty("address-book.api.url");
+		return httpClient.getJson(u + "/contacts/" + Net.urlEncode(id));
+	}
+
 	protected Object contacts(String query) {
 		var u = configuration.getProperty("address-book.api.url");
 		return httpClient
 				.getJson(Net.uriString(u + "/contacts", new AbstractMap.SimpleImmutableEntry<>("query", query)));
-	}
-
-	protected Object contact(String id) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient.getJson(u + "/contacts/" + Net.urlEncode(id));
 	}
 
 	public static class StateRenderer<T> extends Renderer<T> {

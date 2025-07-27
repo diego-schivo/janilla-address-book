@@ -36,6 +36,7 @@ import com.janilla.web.Bind;
 import com.janilla.web.Handle;
 import com.janilla.web.NotFoundException;
 
+@Handle(path = "/api/contacts")
 public class ContactApi {
 
 	public static final AtomicReference<ContactApi> INSTANCE = new AtomicReference<>();
@@ -47,7 +48,7 @@ public class ContactApi {
 			throw new IllegalStateException();
 	}
 
-	@Handle(method = "GET", path = "/api/contacts")
+	@Handle(method = "GET")
 	public List<Contact> list(@Bind("query") String query) {
 		var c = persistence.crud(Contact.class);
 		var q = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
@@ -63,7 +64,7 @@ public class ContactApi {
 		})) : c.list());
 	}
 
-	@Handle(method = "POST", path = "/api/contacts")
+	@Handle(method = "POST")
 	public Contact create(Contact contact) {
 		var x = contact;
 		var l = 1L + Integer.MAX_VALUE + ThreadLocalRandom.current().nextLong(Long.MAX_VALUE - Integer.MAX_VALUE);
@@ -73,7 +74,7 @@ public class ContactApi {
 		return persistence.crud(Contact.class).create(x);
 	}
 
-	@Handle(method = "GET", path = "/api/contacts/([^/]+)")
+	@Handle(method = "GET", path = "([^/]+)")
 	public Contact read(String id) {
 		var x = persistence.crud(Contact.class).read(id);
 		if (x == null)
@@ -81,7 +82,7 @@ public class ContactApi {
 		return x;
 	}
 
-	@Handle(method = "PUT", path = "/api/contacts/([^/]+)")
+	@Handle(method = "PUT", path = "([^/]+)")
 	public Contact update(String id, Contact contact) {
 		var x = persistence.crud(Contact.class).update(id,
 				y -> Reflection.copy(contact, y, z -> !Set.of("id", "createdAt").contains(z)));
@@ -90,7 +91,7 @@ public class ContactApi {
 		return x;
 	}
 
-	@Handle(method = "DELETE", path = "/api/contacts/([^/]+)")
+	@Handle(method = "DELETE", path = "([^/]+)")
 	public Contact delete(String id) {
 		var x = persistence.crud(Contact.class).delete(id);
 		if (x == null)
@@ -98,7 +99,7 @@ public class ContactApi {
 		return x;
 	}
 
-	@Handle(method = "PUT", path = "/api/contacts/([^/]+)/favorite")
+	@Handle(method = "PUT", path = "([^/]+)/favorite")
 	public Contact favorite(String id, Boolean value) {
 		var x = persistence.crud(Contact.class).update(id, y -> y.withFavorite(value));
 		if (x == null)

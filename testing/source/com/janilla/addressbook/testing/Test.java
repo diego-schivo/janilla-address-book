@@ -31,15 +31,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.janilla.addressbook.fullstack.AddressBookFullstack;
 import com.janilla.web.Handle;
 
+@Handle(path = "/test")
 public class Test {
 
 	protected static final AtomicBoolean ONGOING = new AtomicBoolean();
 
 	public AddressBookFullstack fullstack;
 
-	@Handle(method = "POST", path = "/test/start")
+	@Handle(method = "POST", path = "start")
 	public void start() throws IOException {
-//		System.out.println("Test.start, this=" + this);
+//		IO.println("Test.start, this=" + this);
 		if (ONGOING.getAndSet(true))
 			throw new IllegalStateException();
 		var fch = (FileChannel) fullstack.backend.persistence.database().channel().channel();
@@ -49,9 +50,9 @@ public class Test {
 		}
 	}
 
-	@Handle(method = "POST", path = "/test/stop")
+	@Handle(method = "POST", path = "stop")
 	public void stop() {
-//		System.out.println("Test.stop, this=" + this);
+//		IO.println("Test.stop, this=" + this);
 		if (!ONGOING.getAndSet(false))
 			throw new IllegalStateException();
 	}

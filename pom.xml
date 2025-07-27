@@ -59,7 +59,7 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.janilla.addressbook.main.AddressBook</mainClass>
+					<mainClass>com.janilla.addressbook.fullstack.AddressBookFullstack</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>
