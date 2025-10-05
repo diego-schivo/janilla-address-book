@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
@@ -51,6 +52,8 @@ import com.janilla.web.Render;
 
 @Render(template = "index.html")
 public class AddressBookTesting {
+
+	public static final AtomicReference<AddressBookTesting> INSTANCE = new AtomicReference<>();
 
 	public static void main(String[] args) {
 		try {
@@ -100,20 +103,20 @@ public class AddressBookTesting {
 	public List<Class<?>> types;
 
 	public AddressBookTesting(Properties configuration) {
+		if (!INSTANCE.compareAndSet(null, this))
+			throw new IllegalStateException();
 		this.configuration = configuration;
 		types = Java.getPackageClasses(AddressBookTesting.class.getPackageName());
-		factory = new Factory(types, this);
+		factory = new Factory(types, INSTANCE::get);
 		typeResolver = factory.create(DollarTypeResolver.class);
 		fullstack = new AddressBookFullstack(configuration);
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class,
-					Map.of("methods", types.stream().flatMap(
-							x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y)))
-							.toList(), "files",
-							Stream.of("com.janilla.frontend", AddressBookTesting.class.getPackageName())
-									.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile))
-									.toList()));
+			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods",
+					types.stream().flatMap(x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y)))
+							.toList(),
+					"files", Stream.of("com.janilla.frontend", AddressBookTesting.class.getPackageName())
+							.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile)).toList()));
 			handler = x -> {
 //				IO.println("AddressBookTest, " + x.request().getPath() + ", Test.ongoing=" + Test.ONGOING.get());
 				var h2 = Test.ONGOING.get() && !x.request().getPath().startsWith("/test/") ? fullstack.handler

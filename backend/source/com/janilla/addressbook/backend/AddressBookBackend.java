@@ -107,7 +107,7 @@ public class AddressBookBackend {
 			throw new IllegalStateException();
 		this.configuration = configuration;
 		types = Java.getPackageClasses(AddressBookBackend.class.getPackageName());
-		factory = new Factory(types, this);
+		factory = new Factory(types, INSTANCE::get);
 		typeResolver = factory.create(DollarTypeResolver.class);
 
 		{
@@ -121,11 +121,10 @@ public class AddressBookBackend {
 		renderableFactory = new RenderableFactory();
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods",
-					types.stream().flatMap(
-							x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y)))
-							.toList(),
-					"files", List.of()));
+			var f = factory.create(ApplicationHandlerFactory.class,
+					Map.of("methods", types.stream()
+							.flatMap(x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y))).toList(),
+							"files", List.of()));
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
 				if (h == null)
