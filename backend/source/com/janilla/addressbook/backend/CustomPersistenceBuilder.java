@@ -29,13 +29,6 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.janilla.database.BTree;
-import com.janilla.database.BTreeMemory;
-import com.janilla.database.IdAndReference;
-import com.janilla.database.KeyAndData;
-import com.janilla.database.Store;
-import com.janilla.io.ByteConverter;
-import com.janilla.io.TransactionalByteChannel;
 import com.janilla.persistence.ApplicationPersistenceBuilder;
 import com.janilla.persistence.Persistence;
 import com.janilla.reflect.Factory;
@@ -59,14 +52,5 @@ public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
 			}
 		}
 		return x;
-	}
-
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Override
-	protected <ID extends Comparable<ID>> Store<ID, String> newStore(int bTreeOrder, TransactionalByteChannel channel,
-			BTreeMemory memory, KeyAndData<String> keyAndData) {
-		var x = keyAndData.key().equals("Contact") ? ByteConverter.STRING : ByteConverter.LONG;
-		return (Store<ID, String>) new Store<>(new BTree<>(bTreeOrder, channel, memory,
-				IdAndReference.byteConverter((ByteConverter) x), keyAndData.bTree()), ByteConverter.STRING);
 	}
 }
