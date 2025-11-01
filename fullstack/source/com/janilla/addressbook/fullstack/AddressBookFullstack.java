@@ -24,13 +24,13 @@
 package com.janilla.addressbook.fullstack;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
 
@@ -53,19 +53,10 @@ public class AddressBookFullstack {
 		try {
 			AddressBookFullstack a;
 			{
-				var c = new Properties();
-				try (var x = AddressBookFullstack.class.getResourceAsStream("configuration.properties")) {
-					c.load(x);
-				}
-				if (args.length > 0) {
-					var f = args[0];
-					if (f.startsWith("~"))
-						f = System.getProperty("user.home") + f.substring(1);
-					try (var x = Files.newInputStream(Path.of(f))) {
-						c.load(x);
-					}
-				}
-				a = new AddressBookFullstack(c);
+				var f = new Factory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()).stream()
+						.filter(x -> x != CustomFoo.class).toList(), AddressBookFullstack.INSTANCE::get);
+				a = f.create(AddressBookFullstack.class,
+						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
 			}
 
 			HttpServer s;
@@ -84,43 +75,81 @@ public class AddressBookFullstack {
 		}
 	}
 
-	public AddressBookBackend backend;
+	protected AddressBookBackend backend;
 
-	public Properties configuration;
+	protected final Properties configuration;
 
-	public Factory factory;
+	protected final Factory factory;
 
-	public AddressBookFrontend frontend;
+	protected AddressBookFrontend frontend;
 
-	public HttpHandler handler;
+	protected final HttpHandler handler;
 
-	public TypeResolver typeResolver;
+	protected final TypeResolver typeResolver;
 
-	public List<Class<?>> types;
-
-	public AddressBookFullstack(Properties configuration) {
+	public AddressBookFullstack(Factory factory, String configurationFile) {
+		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		this.configuration = configuration;
-		types = Java.getPackageClasses(AddressBookFullstack.class.getPackageName());
-		factory = new Factory(types, INSTANCE::get);
+		configuration = factory.create(Properties.class, Collections.singletonMap("file", configurationFile));
 		typeResolver = factory.create(DollarTypeResolver.class);
 
 		handler = x -> {
 //			IO.println("AddressBookFullstack, " + x.request().getPath());
 			var h = switch (Objects.requireNonNullElse(x.exception(), x.request())) {
-			case HttpRequest rq -> rq.getPath().startsWith("/api/") ? backend.handler : frontend.handler;
-			case Exception _ -> backend.handler;
+			case HttpRequest rq -> rq.getPath().startsWith("/api/") ? backend.handler() : frontend.handler();
+			case Exception _ -> backend.handler();
 			default -> null;
 			};
 			return h.handle(x);
 		};
 
-		backend = new AddressBookBackend(configuration);
-		frontend = new CustomFrontend(configuration);
+		backend = factory.create(AddressBookBackend.class, Java.hashMap("factory", new Factory(Stream
+				.of("fullstack", "backend")
+				.flatMap(x -> Java
+						.getPackageClasses(AddressBookBackend.class.getPackageName().replace(".backend", "." + x))
+						.stream())
+				.toList(), AddressBookBackend.INSTANCE::get), "configurationFile", configurationFile));
+		frontend = factory.create(AddressBookFrontend.class,
+				Java.hashMap("factory",
+						new Factory(
+								Stream.of("fullstack", "frontend")
+										.flatMap(x -> Java.getPackageClasses(AddressBookFrontend.class.getPackageName()
+												.replace(".frontend", "." + x)).stream())
+										.toList(),
+								AddressBookFrontend.INSTANCE::get),
+						"configurationFile", configurationFile));
 	}
 
 	public AddressBookFullstack application() {
 		return this;
+	}
+
+	public AddressBookBackend backend() {
+		return backend;
+	}
+
+	public Properties configuration() {
+		return configuration;
+	}
+
+	public Factory factory() {
+		return factory;
+	}
+
+	public AddressBookFrontend frontend() {
+		return frontend;
+	}
+
+	public HttpHandler handler() {
+		return handler;
+	}
+
+	public TypeResolver typeResolver() {
+		return typeResolver;
+	}
+
+	public Collection<Class<?>> types() {
+		return factory.types();
 	}
 }

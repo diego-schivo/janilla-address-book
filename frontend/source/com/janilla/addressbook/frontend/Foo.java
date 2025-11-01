@@ -21,39 +21,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.testing;
+package com.janilla.addressbook.frontend;
 
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.AbstractMap;
+import java.util.Properties;
 
-import com.janilla.addressbook.fullstack.AddressBookFullstack;
-import com.janilla.web.Handle;
+import com.janilla.http.HttpClient;
+import com.janilla.net.Net;
 
-@Handle(path = "/test")
-public class Test {
+public class Foo {
 
-	protected static final AtomicBoolean ONGOING = new AtomicBoolean();
+	protected final Properties configuration;
 
-	public AddressBookFullstack fullstack;
+	protected final HttpClient httpClient;
 
-	@Handle(method = "POST", path = "start")
-	public void start() throws IOException {
-//		IO.println("Test.start, this=" + this);
-		if (ONGOING.getAndSet(true))
-			throw new IllegalStateException();
-		var fch = (FileChannel) fullstack.backend().persistence().database().channel().channel();
-		try (var ch = Channels.newChannel(getClass().getResourceAsStream("address-book-test.database"))) {
-			var s = fch.transferFrom(ch, 0, Long.MAX_VALUE);
-			fch.truncate(s);
-		}
+	public Foo(Properties configuration, HttpClient httpClient) {
+		this.configuration = configuration;
+		this.httpClient = httpClient;
 	}
 
-	@Handle(method = "POST", path = "stop")
-	public void stop() {
-//		IO.println("Test.stop, this=" + this);
-		if (!ONGOING.getAndSet(false))
-			throw new IllegalStateException();
+	public Object contact(String id) {
+		var u = configuration.getProperty("address-book.api.url");
+		return httpClient.getJson(u + "/contacts/" + Net.urlEncode(id));
+	}
+
+	public Object contacts(String query) {
+		var u = configuration.getProperty("address-book.api.url");
+		return httpClient
+				.getJson(Net.uriString(u + "/contacts", new AbstractMap.SimpleImmutableEntry<>("query", query)));
 	}
 }

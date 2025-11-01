@@ -21,39 +21,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.testing;
+package com.janilla.addressbook.fullstack;
 
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Properties;
 
-import com.janilla.addressbook.fullstack.AddressBookFullstack;
-import com.janilla.web.Handle;
+import com.janilla.addressbook.backend.ContactApi;
+import com.janilla.addressbook.frontend.Foo;
+import com.janilla.http.HttpClient;
 
-@Handle(path = "/test")
-public class Test {
+public class CustomFoo extends Foo {
 
-	protected static final AtomicBoolean ONGOING = new AtomicBoolean();
-
-	public AddressBookFullstack fullstack;
-
-	@Handle(method = "POST", path = "start")
-	public void start() throws IOException {
-//		IO.println("Test.start, this=" + this);
-		if (ONGOING.getAndSet(true))
-			throw new IllegalStateException();
-		var fch = (FileChannel) fullstack.backend().persistence().database().channel().channel();
-		try (var ch = Channels.newChannel(getClass().getResourceAsStream("address-book-test.database"))) {
-			var s = fch.transferFrom(ch, 0, Long.MAX_VALUE);
-			fch.truncate(s);
-		}
+	public CustomFoo(Properties configuration, HttpClient httpClient) {
+		super(configuration, httpClient);
 	}
 
-	@Handle(method = "POST", path = "stop")
-	public void stop() {
-//		IO.println("Test.stop, this=" + this);
-		if (!ONGOING.getAndSet(false))
-			throw new IllegalStateException();
+	@Override
+	public Object contacts(String query) {
+		return ContactApi.INSTANCE.get().list(query);
+	}
+
+	@Override
+	public Object contact(String id) {
+		return ContactApi.INSTANCE.get().read(id);
 	}
 }

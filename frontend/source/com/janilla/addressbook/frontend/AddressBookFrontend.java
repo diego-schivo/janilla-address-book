@@ -25,12 +25,12 @@ package com.janilla.addressbook.frontend;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -64,19 +64,10 @@ public class AddressBookFrontend {
 		try {
 			AddressBookFrontend a;
 			{
-				var c = new Properties();
-				try (var x = AddressBookFrontend.class.getResourceAsStream("configuration.properties")) {
-					c.load(x);
-				}
-				if (args.length > 0) {
-					var f = args[0];
-					if (f.startsWith("~"))
-						f = System.getProperty("user.home") + f.substring(1);
-					try (var x = Files.newInputStream(Path.of(f))) {
-						c.load(x);
-					}
-				}
-				a = new AddressBookFrontend(c);
+				var f = new Factory(Java.getPackageClasses(AddressBookFrontend.class.getPackageName()),
+						AddressBookFrontend.INSTANCE::get);
+				a = f.create(AddressBookFrontend.class,
+						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
 			}
 
 			HttpServer s;
@@ -95,31 +86,31 @@ public class AddressBookFrontend {
 		}
 	}
 
-	public Properties configuration;
+	protected final Properties configuration;
 
-	public Factory factory;
+	protected final Factory factory;
 
-	public HttpHandler handler;
+	protected final HttpHandler handler;
 
-	public HttpClient httpClient;
+	protected final HttpClient httpClient;
 
-	public TypeResolver typeResolver;
+	protected final TypeResolver typeResolver;
 
-	public List<Class<?>> types;
+	protected final Foo foo;
 
-	public AddressBookFrontend(Properties configuration) {
+	public AddressBookFrontend(Factory factory, String configurationFile) {
+		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		this.configuration = configuration;
-		types = Java.getPackageClasses(AddressBookFrontend.class.getPackageName());
-		factory = new Factory(types, INSTANCE::get);
+		configuration = factory.create(Properties.class, Collections.singletonMap("file", configurationFile));
 		typeResolver = factory.create(DollarTypeResolver.class);
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods",
-					types.stream().flatMap(x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y)))
-							.toList(),
-					"files", Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
+			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
+					.flatMap(x -> Arrays.stream(x.getMethods()).filter(y -> !Modifier.isStatic(y.getModifiers()))
+							.map(y -> new ClassAndMethod(x, y)))
+					.toList(), "files",
+					Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
 							.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile)).toList()));
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
@@ -138,22 +129,48 @@ public class AddressBookFrontend {
 			}
 			httpClient = new HttpClient(c);
 		}
+
+		foo = factory.create(Foo.class);
 	}
 
 	public AddressBookFrontend application() {
 		return this;
 	}
 
+	public Properties configuration() {
+		return configuration;
+	}
+
+	public Factory factory() {
+		return factory;
+	}
+
+	public HttpHandler handler() {
+		return handler;
+	}
+
+	public HttpClient httpClient() {
+		return httpClient;
+	}
+
+	public TypeResolver typeResolver() {
+		return typeResolver;
+	}
+
+	public Collection<Class<?>> types() {
+		return factory.types();
+	}
+
 	@Handle(method = "GET", path = "/")
 	public Index root(String q) throws IOException {
 		var u = configuration.getProperty("address-book.api.url");
-		return new Index(u, Map.of("contacts", contacts(q)));
+		return new Index(u, Map.of("contacts", foo.contacts(q)));
 	}
 
 	@Handle(method = "GET", path = "/contacts/([^/]+)(/edit)?")
 	public Index contact(String id, String edit, String q) {
 		var u = configuration.getProperty("address-book.api.url");
-		return new Index(u, Map.of("contacts", contacts(q), "contact", contact(id)));
+		return new Index(u, Map.of("contacts", foo.contacts(q), "contact", foo.contact(id)));
 	}
 
 	@Handle(method = "GET", path = "/about")
@@ -164,17 +181,6 @@ public class AddressBookFrontend {
 
 	@Render(template = "index.html")
 	public record Index(String apiUrl, @Render(renderer = StateRenderer.class) Map<String, Object> state) {
-	}
-
-	protected Object contact(String id) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient.getJson(u + "/contacts/" + Net.urlEncode(id));
-	}
-
-	protected Object contacts(String query) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient
-				.getJson(Net.uriString(u + "/contacts", new AbstractMap.SimpleImmutableEntry<>("query", query)));
 	}
 
 	public static class StateRenderer<T> extends Renderer<T> {

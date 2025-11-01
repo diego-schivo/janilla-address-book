@@ -23,24 +23,29 @@
  */
 package com.janilla.addressbook.fullstack;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
-import com.janilla.addressbook.backend.ContactApi;
-import com.janilla.addressbook.frontend.AddressBookFrontend;
+public class CustomProperties extends Properties {
 
-public class CustomFrontend extends AddressBookFrontend {
+	private static final long serialVersionUID = -2294199037395154052L;
 
-	public CustomFrontend(Properties configuration) {
-		super(configuration);
-	}
-
-	@Override
-	protected Object contacts(String query) {
-		return ContactApi.INSTANCE.get().list(query);
-	}
-
-	@Override
-	protected Object contact(String id) {
-		return ContactApi.INSTANCE.get().read(id);
+	public CustomProperties(String file) {
+		try {
+			try (var x = AddressBookFullstack.class.getResourceAsStream("configuration.properties")) {
+				load(x);
+			}
+			if (file != null) {
+				var f = file.startsWith("~") ? System.getProperty("user.home") + file.substring(1) : file;
+				try (var x = Files.newInputStream(Path.of(f))) {
+					load(x);
+				}
+			}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 }

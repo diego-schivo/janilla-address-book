@@ -23,11 +23,12 @@
  */
 package com.janilla.addressbook.testing;
 
+import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -59,19 +60,10 @@ public class AddressBookTesting {
 		try {
 			AddressBookTesting a;
 			{
-				var c = new Properties();
-				try (var x = AddressBookTesting.class.getResourceAsStream("configuration.properties")) {
-					c.load(x);
-				}
-				if (args.length > 0) {
-					var f = args[0];
-					if (f.startsWith("~"))
-						f = System.getProperty("user.home") + f.substring(1);
-					try (var x = Files.newInputStream(Path.of(f))) {
-						c.load(x);
-					}
-				}
-				a = new AddressBookTesting(c);
+				var f = new Factory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
+						AddressBookTesting.INSTANCE::get);
+				a = f.create(AddressBookTesting.class,
+						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
 			}
 
 			HttpServer s;
@@ -90,36 +82,37 @@ public class AddressBookTesting {
 		}
 	}
 
-	public Properties configuration;
+	protected final Properties configuration;
 
-	public Factory factory;
+	protected final Factory factory;
 
-	public AddressBookFullstack fullstack;
+	protected final AddressBookFullstack fullstack;
 
-	public HttpHandler handler;
+	protected final HttpHandler handler;
 
-	public TypeResolver typeResolver;
+	protected final TypeResolver typeResolver;
 
-	public List<Class<?>> types;
-
-	public AddressBookTesting(Properties configuration) {
+	public AddressBookTesting(Factory factory, String configurationFile) {
+		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		this.configuration = configuration;
-		types = Java.getPackageClasses(AddressBookTesting.class.getPackageName());
-		factory = new Factory(types, INSTANCE::get);
+		configuration = factory.create(Properties.class, Collections.singletonMap("file", configurationFile));
 		typeResolver = factory.create(DollarTypeResolver.class);
-		fullstack = new AddressBookFullstack(configuration);
+
+		fullstack = factory.create(AddressBookFullstack.class,
+				Java.hashMap("factory", new Factory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
+						AddressBookFullstack.INSTANCE::get), "configurationFile", configurationFile));
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods",
-					types.stream().flatMap(x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y)))
-							.toList(),
-					"files", Stream.of("com.janilla.frontend", AddressBookTesting.class.getPackageName())
+			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
+					.flatMap(x -> Arrays.stream(x.getMethods()).filter(y -> !Modifier.isStatic(y.getModifiers()))
+							.map(y -> new ClassAndMethod(x, y)))
+					.toList(), "files",
+					Stream.of("com.janilla.frontend", AddressBookTesting.class.getPackageName())
 							.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile)).toList()));
 			handler = x -> {
 //				IO.println("AddressBookTest, " + x.request().getPath() + ", Test.ongoing=" + Test.ONGOING.get());
-				var h2 = Test.ONGOING.get() && !x.request().getPath().startsWith("/test/") ? fullstack.handler
+				var h2 = Test.ONGOING.get() && !x.request().getPath().startsWith("/test/") ? fullstack.handler()
 						: (HttpHandler) y -> {
 							var h = f.createHandler(Objects.requireNonNullElse(y.exception(), y.request()));
 							if (h == null)
@@ -134,5 +127,29 @@ public class AddressBookTesting {
 	@Handle(method = "GET", path = "/")
 	public AddressBookTesting application() {
 		return this;
+	}
+
+	public Properties configuration() {
+		return configuration;
+	}
+
+	public Factory factory() {
+		return factory;
+	}
+
+	public AddressBookFullstack fullstack() {
+		return fullstack;
+	}
+
+	public HttpHandler handler() {
+		return handler;
+	}
+
+	public TypeResolver typeResolver() {
+		return typeResolver;
+	}
+
+	public Collection<Class<?>> types() {
+		return factory.types();
 	}
 }

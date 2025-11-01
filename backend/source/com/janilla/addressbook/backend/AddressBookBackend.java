@@ -23,10 +23,12 @@
  */
 package com.janilla.addressbook.backend;
 
+import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,19 +59,9 @@ public class AddressBookBackend {
 		try {
 			AddressBookBackend a;
 			{
-				var c = new Properties();
-				try (var x = AddressBookBackend.class.getResourceAsStream("configuration.properties")) {
-					c.load(x);
-				}
-				if (args.length > 0) {
-					var f = args[0];
-					if (f.startsWith("~"))
-						f = System.getProperty("user.home") + f.substring(1);
-					try (var x = Files.newInputStream(Path.of(f))) {
-						c.load(x);
-					}
-				}
-				a = new AddressBookBackend(c);
+				var f = new Factory(Java.getPackageClasses(AddressBookBackend.class.getPackageName()), INSTANCE::get);
+				a = f.create(AddressBookBackend.class,
+						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
 			}
 
 			HttpServer s;
@@ -88,26 +80,23 @@ public class AddressBookBackend {
 		}
 	}
 
-	public Properties configuration;
+	protected final Properties configuration;
 
-	public Factory factory;
+	protected final Factory factory;
 
-	public HttpHandler handler;
+	protected final HttpHandler handler;
 
-	public Persistence persistence;
+	protected final Persistence persistence;
 
-	public RenderableFactory renderableFactory;
+	protected final RenderableFactory renderableFactory;
 
-	public TypeResolver typeResolver;
+	protected final TypeResolver typeResolver;
 
-	public List<Class<?>> types;
-
-	public AddressBookBackend(Properties configuration) {
+	public AddressBookBackend(Factory factory, String configurationFile) {
+		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		this.configuration = configuration;
-		types = Java.getPackageClasses(AddressBookBackend.class.getPackageName());
-		factory = new Factory(types, INSTANCE::get);
+		configuration = factory.create(Properties.class, Collections.singletonMap("file", configurationFile));
 		typeResolver = factory.create(DollarTypeResolver.class);
 
 		{
@@ -121,10 +110,11 @@ public class AddressBookBackend {
 		renderableFactory = new RenderableFactory();
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class,
-					Map.of("methods", types.stream()
-							.flatMap(x -> Arrays.stream(x.getMethods()).map(y -> new ClassAndMethod(x, y))).toList(),
-							"files", List.of()));
+			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods",
+					types().stream().flatMap(x -> Arrays.stream(x.getMethods())
+							.filter(y -> !Modifier.isStatic(y.getModifiers())).map(y -> new ClassAndMethod(x, y)))
+							.toList(),
+					"files", List.of()));
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
 				if (h == null)
@@ -136,5 +126,33 @@ public class AddressBookBackend {
 
 	public AddressBookBackend application() {
 		return this;
+	}
+
+	public Properties configuration() {
+		return configuration;
+	}
+
+	public Factory factory() {
+		return factory;
+	}
+
+	public HttpHandler handler() {
+		return handler;
+	}
+
+	public Persistence persistence() {
+		return persistence;
+	}
+
+	public RenderableFactory renderableFactory() {
+		return renderableFactory;
+	}
+
+	public TypeResolver typeResolver() {
+		return typeResolver;
+	}
+
+	public Collection<Class<?>> types() {
+		return factory.types();
 	}
 }

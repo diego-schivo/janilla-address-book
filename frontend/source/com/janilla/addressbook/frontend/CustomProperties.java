@@ -21,39 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.testing;
+package com.janilla.addressbook.frontend;
 
 import java.io.IOException;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
 
-import com.janilla.addressbook.fullstack.AddressBookFullstack;
-import com.janilla.web.Handle;
+public class CustomProperties extends Properties {
 
-@Handle(path = "/test")
-public class Test {
+	private static final long serialVersionUID = -1813927853700555931L;
 
-	protected static final AtomicBoolean ONGOING = new AtomicBoolean();
-
-	public AddressBookFullstack fullstack;
-
-	@Handle(method = "POST", path = "start")
-	public void start() throws IOException {
-//		IO.println("Test.start, this=" + this);
-		if (ONGOING.getAndSet(true))
-			throw new IllegalStateException();
-		var fch = (FileChannel) fullstack.backend().persistence().database().channel().channel();
-		try (var ch = Channels.newChannel(getClass().getResourceAsStream("address-book-test.database"))) {
-			var s = fch.transferFrom(ch, 0, Long.MAX_VALUE);
-			fch.truncate(s);
+	public CustomProperties(String file) {
+		try {
+			try (var x = AddressBookFrontend.class.getResourceAsStream("configuration.properties")) {
+				load(x);
+			}
+			if (file != null) {
+				var f = file.startsWith("~") ? System.getProperty("user.home") + file.substring(1) : file;
+				try (var x = Files.newInputStream(Path.of(f))) {
+					load(x);
+				}
+			}
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
-	}
-
-	@Handle(method = "POST", path = "stop")
-	public void stop() {
-//		IO.println("Test.stop, this=" + this);
-		if (!ONGOING.getAndSet(false))
-			throw new IllegalStateException();
 	}
 }
