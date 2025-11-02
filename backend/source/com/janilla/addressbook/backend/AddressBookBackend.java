@@ -92,7 +92,7 @@ public class AddressBookBackend {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookBackend(Factory factory, String configurationFile) {
+	public AddressBookBackend(Factory factory, Path configurationFile) {
 		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();

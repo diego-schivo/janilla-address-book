@@ -28,6 +28,7 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -96,9 +97,9 @@ public class AddressBookFrontend {
 
 	protected final TypeResolver typeResolver;
 
-	protected final Foo foo;
+	protected final DataFetching dataFetching;
 
-	public AddressBookFrontend(Factory factory, String configurationFile) {
+	public AddressBookFrontend(Factory factory, Path configurationFile) {
 		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
@@ -130,7 +131,7 @@ public class AddressBookFrontend {
 			httpClient = new HttpClient(c);
 		}
 
-		foo = factory.create(Foo.class);
+		dataFetching = factory.create(DataFetching.class);
 	}
 
 	public AddressBookFrontend application() {
@@ -164,13 +165,13 @@ public class AddressBookFrontend {
 	@Handle(method = "GET", path = "/")
 	public Index root(String q) throws IOException {
 		var u = configuration.getProperty("address-book.api.url");
-		return new Index(u, Map.of("contacts", foo.contacts(q)));
+		return new Index(u, Map.of("contacts", dataFetching.contacts(q)));
 	}
 
 	@Handle(method = "GET", path = "/contacts/([^/]+)(/edit)?")
 	public Index contact(String id, String edit, String q) {
 		var u = configuration.getProperty("address-book.api.url");
-		return new Index(u, Map.of("contacts", foo.contacts(q), "contact", foo.contact(id)));
+		return new Index(u, Map.of("contacts", dataFetching.contacts(q), "contact", dataFetching.contact(id)));
 	}
 
 	@Handle(method = "GET", path = "/about")

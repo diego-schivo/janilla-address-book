@@ -33,17 +33,15 @@ public class CustomProperties extends Properties {
 
 	private static final long serialVersionUID = -1813927853700555931L;
 
-	public CustomProperties(String file) {
+	public CustomProperties(Path file) {
 		try {
 			try (var x = AddressBookFrontend.class.getResourceAsStream("configuration.properties")) {
 				load(x);
 			}
-			if (file != null) {
-				var f = file.startsWith("~") ? System.getProperty("user.home") + file.substring(1) : file;
-				try (var x = Files.newInputStream(Path.of(f))) {
+			if (file != null)
+				try (var x = Files.newInputStream(file)) {
 					load(x);
 				}
-			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}

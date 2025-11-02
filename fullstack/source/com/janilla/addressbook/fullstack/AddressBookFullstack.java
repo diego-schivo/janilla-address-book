@@ -24,6 +24,7 @@
 package com.janilla.addressbook.fullstack;
 
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -54,7 +55,7 @@ public class AddressBookFullstack {
 			AddressBookFullstack a;
 			{
 				var f = new Factory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()).stream()
-						.filter(x -> x != CustomFoo.class).toList(), AddressBookFullstack.INSTANCE::get);
+						.filter(x -> x != CustomDataFetching.class).toList(), AddressBookFullstack.INSTANCE::get);
 				a = f.create(AddressBookFullstack.class,
 						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
 			}
@@ -87,7 +88,7 @@ public class AddressBookFullstack {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookFullstack(Factory factory, String configurationFile) {
+	public AddressBookFullstack(Factory factory, Path configurationFile) {
 		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();

@@ -26,6 +26,7 @@ package com.janilla.addressbook.testing;
 import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -92,7 +93,7 @@ public class AddressBookTesting {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookTesting(Factory factory, String configurationFile) {
+	public AddressBookTesting(Factory factory, Path configurationFile) {
 		this.factory = factory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();

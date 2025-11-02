@@ -21,33 +21,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.frontend;
+package com.janilla.addressbook.fullstack;
 
-import java.util.AbstractMap;
 import java.util.Properties;
 
+import com.janilla.addressbook.backend.ContactApi;
+import com.janilla.addressbook.frontend.DataFetching;
 import com.janilla.http.HttpClient;
-import com.janilla.net.Net;
 
-public class Foo {
+public class CustomDataFetching extends DataFetching {
 
-	protected final Properties configuration;
-
-	protected final HttpClient httpClient;
-
-	public Foo(Properties configuration, HttpClient httpClient) {
-		this.configuration = configuration;
-		this.httpClient = httpClient;
+	public CustomDataFetching(Properties configuration, HttpClient httpClient) {
+		super(configuration, httpClient);
 	}
 
-	public Object contact(String id) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient.getJson(u + "/contacts/" + Net.urlEncode(id));
-	}
-
+	@Override
 	public Object contacts(String query) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient
-				.getJson(Net.uriString(u + "/contacts", new AbstractMap.SimpleImmutableEntry<>("query", query)));
+		return ContactApi.INSTANCE.get().list(query);
+	}
+
+	@Override
+	public Object contact(String id) {
+		return ContactApi.INSTANCE.get().read(id);
 	}
 }
