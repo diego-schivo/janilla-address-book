@@ -29,14 +29,14 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.janilla.ioc.DependencyInjector;
 import com.janilla.persistence.ApplicationPersistenceBuilder;
 import com.janilla.persistence.Persistence;
-import com.janilla.reflect.Factory;
 
 public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
 
-	public CustomPersistenceBuilder(Path databaseFile, Factory factory) {
-		super(databaseFile, factory);
+	public CustomPersistenceBuilder(Path databaseFile, DependencyInjector injector) {
+		super(databaseFile, injector);
 	}
 
 	@Override

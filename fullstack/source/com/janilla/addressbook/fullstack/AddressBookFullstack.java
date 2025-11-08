@@ -40,11 +40,11 @@ import com.janilla.addressbook.frontend.AddressBookFrontend;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpRequest;
 import com.janilla.http.HttpServer;
+import com.janilla.ioc.DependencyInjector;
 import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.TypeResolver;
 import com.janilla.net.Net;
-import com.janilla.reflect.Factory;
 
 public class AddressBookFullstack {
 
@@ -54,10 +54,16 @@ public class AddressBookFullstack {
 		try {
 			AddressBookFullstack a;
 			{
-				var f = new Factory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()).stream()
-						.filter(x -> x != CustomDataFetching.class).toList(), AddressBookFullstack.INSTANCE::get);
+				var f = new DependencyInjector(
+						Java.getPackageClasses(AddressBookFullstack.class.getPackageName()).stream()
+								.filter(x -> x != CustomDataFetching.class).toList(),
+						AddressBookFullstack.INSTANCE::get);
 				a = f.create(AddressBookFullstack.class,
-						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
+						Java.hashMap("factory", f, "configurationFile",
+								args.length > 0 ? Path.of(
+										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
+												: args[0])
+										: null));
 			}
 
 			HttpServer s;
@@ -67,7 +73,7 @@ public class AddressBookFullstack {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.fullstack.server.port"));
-				s = a.factory.create(HttpServer.class,
+				s = a.injector.create(HttpServer.class,
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -80,7 +86,7 @@ public class AddressBookFullstack {
 
 	protected final Properties configuration;
 
-	protected final Factory factory;
+	protected final DependencyInjector injector;
 
 	protected AddressBookFrontend frontend;
 
@@ -88,12 +94,12 @@ public class AddressBookFullstack {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookFullstack(Factory factory, Path configurationFile) {
-		this.factory = factory;
+	public AddressBookFullstack(DependencyInjector injector, Path configurationFile) {
+		this.injector = injector;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		configuration = factory.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = factory.create(DollarTypeResolver.class);
+		configuration = injector.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		typeResolver = injector.create(DollarTypeResolver.class);
 
 		handler = x -> {
 //			IO.println("AddressBookFullstack, " + x.request().getPath());
@@ -105,15 +111,15 @@ public class AddressBookFullstack {
 			return h.handle(x);
 		};
 
-		backend = factory.create(AddressBookBackend.class, Java.hashMap("factory", new Factory(Stream
+		backend = injector.create(AddressBookBackend.class, Java.hashMap("factory", new DependencyInjector(Stream
 				.of("fullstack", "backend")
 				.flatMap(x -> Java
 						.getPackageClasses(AddressBookBackend.class.getPackageName().replace(".backend", "." + x))
 						.stream())
 				.toList(), AddressBookBackend.INSTANCE::get), "configurationFile", configurationFile));
-		frontend = factory.create(AddressBookFrontend.class,
+		frontend = injector.create(AddressBookFrontend.class,
 				Java.hashMap("factory",
-						new Factory(
+						new DependencyInjector(
 								Stream.of("fullstack", "frontend")
 										.flatMap(x -> Java.getPackageClasses(AddressBookFrontend.class.getPackageName()
 												.replace(".frontend", "." + x)).stream())
@@ -134,8 +140,8 @@ public class AddressBookFullstack {
 		return configuration;
 	}
 
-	public Factory factory() {
-		return factory;
+	public DependencyInjector injector() {
+		return injector;
 	}
 
 	public AddressBookFrontend frontend() {
@@ -151,6 +157,6 @@ public class AddressBookFullstack {
 	}
 
 	public Collection<Class<?>> types() {
-		return factory.types();
+		return injector.types();
 	}
 }

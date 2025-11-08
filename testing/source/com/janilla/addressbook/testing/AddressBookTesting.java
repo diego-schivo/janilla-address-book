@@ -41,12 +41,12 @@ import javax.net.ssl.SSLContext;
 import com.janilla.addressbook.fullstack.AddressBookFullstack;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
+import com.janilla.ioc.DependencyInjector;
 import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.TypeResolver;
 import com.janilla.net.Net;
 import com.janilla.reflect.ClassAndMethod;
-import com.janilla.reflect.Factory;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
 import com.janilla.web.NotFoundException;
@@ -61,10 +61,14 @@ public class AddressBookTesting {
 		try {
 			AddressBookTesting a;
 			{
-				var f = new Factory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
+				var f = new DependencyInjector(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
 						AddressBookTesting.INSTANCE::get);
 				a = f.create(AddressBookTesting.class,
-						Java.hashMap("factory", f, "configurationFile", args.length > 0 ? args[0] : null));
+						Java.hashMap("factory", f, "configurationFile",
+								args.length > 0 ? Path.of(
+										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
+												: args[0])
+										: null));
 			}
 
 			HttpServer s;
@@ -74,7 +78,7 @@ public class AddressBookTesting {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
-				s = a.factory.create(HttpServer.class,
+				s = a.injector.create(HttpServer.class,
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -85,7 +89,7 @@ public class AddressBookTesting {
 
 	protected final Properties configuration;
 
-	protected final Factory factory;
+	protected final DependencyInjector injector;
 
 	protected final AddressBookFullstack fullstack;
 
@@ -93,19 +97,19 @@ public class AddressBookTesting {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookTesting(Factory factory, Path configurationFile) {
-		this.factory = factory;
+	public AddressBookTesting(DependencyInjector injector, Path configurationFile) {
+		this.injector = injector;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		configuration = factory.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = factory.create(DollarTypeResolver.class);
+		configuration = injector.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		typeResolver = injector.create(DollarTypeResolver.class);
 
-		fullstack = factory.create(AddressBookFullstack.class,
-				Java.hashMap("factory", new Factory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
+		fullstack = injector.create(AddressBookFullstack.class,
+				Java.hashMap("factory", new DependencyInjector(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
 						AddressBookFullstack.INSTANCE::get), "configurationFile", configurationFile));
 
 		{
-			var f = factory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
+			var f = injector.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
 					.flatMap(x -> Arrays.stream(x.getMethods()).filter(y -> !Modifier.isStatic(y.getModifiers()))
 							.map(y -> new ClassAndMethod(x, y)))
 					.toList(), "files",
@@ -134,8 +138,8 @@ public class AddressBookTesting {
 		return configuration;
 	}
 
-	public Factory factory() {
-		return factory;
+	public DependencyInjector injector() {
+		return injector;
 	}
 
 	public AddressBookFullstack fullstack() {
@@ -151,6 +155,6 @@ public class AddressBookTesting {
 	}
 
 	public Collection<Class<?>> types() {
-		return factory.types();
+		return injector.types();
 	}
 }

@@ -23,8 +23,11 @@
  */
 package com.janilla.addressbook.frontend;
 
-import java.util.AbstractMap;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import com.janilla.http.HttpClient;
 import com.janilla.net.Net;
@@ -42,12 +45,36 @@ public class DataFetching {
 
 	public Object contact(String id) {
 		var u = configuration.getProperty("address-book.api.url");
-		return httpClient.getJson(u + "/contacts/" + Net.urlEncode(id));
+		return httpClient.getJson(uri("/contacts/" + Net.urlEncode(id)));
 	}
 
 	public Object contacts(String query) {
 		var u = configuration.getProperty("address-book.api.url");
-		return httpClient
-				.getJson(Net.uriString(u + "/contacts", new AbstractMap.SimpleImmutableEntry<>("query", query)));
+		return httpClient.getJson(uri("/contacts", "query", query));
+	}
+
+	protected URI uri(String path) {
+		return uri(path, (String[][]) null);
+	}
+
+	protected URI uri(String path, String name, Object value) {
+		return uri(path, new String[] { name, Objects.toString(value, null) });
+	}
+
+	protected URI uri(String path, String name1, Object value1, String name2, Object value2) {
+		return uri(path, new String[] { name1, Objects.toString(value1, null) },
+				new String[] { name2, Objects.toString(value2, null) });
+	}
+
+	protected URI uri(String path, String[]... pairs) {
+		var s = pairs != null
+				? Arrays.stream(pairs).filter(x -> x[1] != null)
+						.map(x -> Net.urlEncode(x[0]) + "=" + Net.urlEncode(x[1])).collect(Collectors.joining("&"))
+				: null;
+		var b = new StringBuilder().append(URI.create(configuration.getProperty("website-template.api.url")))
+				.append(path);
+		if (s != null && !s.isEmpty())
+			b.append('?').append(s);
+		return URI.create(b.toString());
 	}
 }
