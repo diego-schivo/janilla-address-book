@@ -43,7 +43,7 @@ import javax.net.ssl.SSLContext;
 import com.janilla.http.HttpClient;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
-import com.janilla.ioc.DependencyInjector;
+import com.janilla.ioc.DiFactory;
 import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.Json;
@@ -65,10 +65,10 @@ public class AddressBookFrontend {
 		try {
 			AddressBookFrontend a;
 			{
-				var f = new DependencyInjector(Java.getPackageClasses(AddressBookFrontend.class.getPackageName()),
+				var f = new DiFactory(Java.getPackageClasses(AddressBookFrontend.class.getPackageName()),
 						AddressBookFrontend.INSTANCE::get);
 				a = f.create(AddressBookFrontend.class,
-						Java.hashMap("factory", f, "configurationFile",
+						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
 										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
 												: args[0])
@@ -82,7 +82,7 @@ public class AddressBookFrontend {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.frontend.server.port"));
-				s = a.injector.create(HttpServer.class,
+				s = a.diFactory.create(HttpServer.class,
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -95,7 +95,7 @@ public class AddressBookFrontend {
 
 	protected final DataFetching dataFetching;
 
-	protected final DependencyInjector injector;
+	protected final DiFactory diFactory;
 
 	protected final HttpHandler handler;
 
@@ -103,15 +103,15 @@ public class AddressBookFrontend {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookFrontend(DependencyInjector injector, Path configurationFile) {
-		this.injector = injector;
+	public AddressBookFrontend(DiFactory diFactory, Path configurationFile) {
+		this.diFactory = diFactory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		configuration = injector.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = injector.create(DollarTypeResolver.class);
+		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		{
-			var f = injector.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
+			var f = diFactory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
 					.flatMap(x -> Arrays.stream(x.getMethods()).filter(y -> !Modifier.isStatic(y.getModifiers()))
 							.map(y -> new ClassAndMethod(x, y)))
 					.toList(), "files",
@@ -135,7 +135,7 @@ public class AddressBookFrontend {
 			httpClient = new HttpClient(c);
 		}
 
-		dataFetching = injector.create(DataFetching.class);
+		dataFetching = diFactory.create(DataFetching.class);
 	}
 
 	public AddressBookFrontend application() {
@@ -146,8 +146,8 @@ public class AddressBookFrontend {
 		return configuration;
 	}
 
-	public DependencyInjector injector() {
-		return injector;
+	public DiFactory diFactory() {
+		return diFactory;
 	}
 
 	public HttpHandler handler() {
@@ -163,7 +163,7 @@ public class AddressBookFrontend {
 	}
 
 	public Collection<Class<?>> types() {
-		return injector.types();
+		return diFactory.types();
 	}
 
 	@Handle(method = "GET", path = "/")
@@ -192,7 +192,7 @@ public class AddressBookFrontend {
 
 		@Override
 		public String apply(T value) {
-			return Json.format(INSTANCE.get().injector.create(ReflectionJsonIterator.class,
+			return Json.format(INSTANCE.get().diFactory.create(ReflectionJsonIterator.class,
 					Map.of("object", value, "includeType", false)));
 		}
 	}

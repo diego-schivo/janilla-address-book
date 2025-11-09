@@ -40,7 +40,7 @@ import com.janilla.addressbook.frontend.AddressBookFrontend;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpRequest;
 import com.janilla.http.HttpServer;
-import com.janilla.ioc.DependencyInjector;
+import com.janilla.ioc.DiFactory;
 import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.TypeResolver;
@@ -54,12 +54,12 @@ public class AddressBookFullstack {
 		try {
 			AddressBookFullstack a;
 			{
-				var f = new DependencyInjector(
+				var f = new DiFactory(
 						Java.getPackageClasses(AddressBookFullstack.class.getPackageName()).stream()
 								.filter(x -> x != CustomDataFetching.class).toList(),
 						AddressBookFullstack.INSTANCE::get);
 				a = f.create(AddressBookFullstack.class,
-						Java.hashMap("factory", f, "configurationFile",
+						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
 										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
 												: args[0])
@@ -73,7 +73,7 @@ public class AddressBookFullstack {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.fullstack.server.port"));
-				s = a.injector.create(HttpServer.class,
+				s = a.diFactory.create(HttpServer.class,
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -86,7 +86,7 @@ public class AddressBookFullstack {
 
 	protected final Properties configuration;
 
-	protected final DependencyInjector injector;
+	protected final DiFactory diFactory;
 
 	protected AddressBookFrontend frontend;
 
@@ -94,12 +94,12 @@ public class AddressBookFullstack {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookFullstack(DependencyInjector injector, Path configurationFile) {
-		this.injector = injector;
+	public AddressBookFullstack(DiFactory diFactory, Path configurationFile) {
+		this.diFactory = diFactory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		configuration = injector.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = injector.create(DollarTypeResolver.class);
+		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		handler = x -> {
 //			IO.println("AddressBookFullstack, " + x.request().getPath());
@@ -111,15 +111,15 @@ public class AddressBookFullstack {
 			return h.handle(x);
 		};
 
-		backend = injector.create(AddressBookBackend.class, Java.hashMap("factory", new DependencyInjector(Stream
+		backend = diFactory.create(AddressBookBackend.class, Java.hashMap("diFactory", new DiFactory(Stream
 				.of("fullstack", "backend")
 				.flatMap(x -> Java
 						.getPackageClasses(AddressBookBackend.class.getPackageName().replace(".backend", "." + x))
 						.stream())
 				.toList(), AddressBookBackend.INSTANCE::get), "configurationFile", configurationFile));
-		frontend = injector.create(AddressBookFrontend.class,
-				Java.hashMap("factory",
-						new DependencyInjector(
+		frontend = diFactory.create(AddressBookFrontend.class,
+				Java.hashMap("diFactory",
+						new DiFactory(
 								Stream.of("fullstack", "frontend")
 										.flatMap(x -> Java.getPackageClasses(AddressBookFrontend.class.getPackageName()
 												.replace(".frontend", "." + x)).stream())
@@ -140,8 +140,8 @@ public class AddressBookFullstack {
 		return configuration;
 	}
 
-	public DependencyInjector injector() {
-		return injector;
+	public DiFactory diFactory() {
+		return diFactory;
 	}
 
 	public AddressBookFrontend frontend() {
@@ -157,6 +157,6 @@ public class AddressBookFullstack {
 	}
 
 	public Collection<Class<?>> types() {
-		return injector.types();
+		return diFactory.types();
 	}
 }

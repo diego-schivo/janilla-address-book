@@ -64,7 +64,7 @@ public class AddressBookTesting {
 				var f = new DependencyInjector(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
 						AddressBookTesting.INSTANCE::get);
 				a = f.create(AddressBookTesting.class,
-						Java.hashMap("factory", f, "configurationFile",
+						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
 										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
 												: args[0])
@@ -78,7 +78,7 @@ public class AddressBookTesting {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
-				s = a.injector.create(HttpServer.class,
+				s = a.diFactory.create(HttpServer.class,
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -89,7 +89,7 @@ public class AddressBookTesting {
 
 	protected final Properties configuration;
 
-	protected final DependencyInjector injector;
+	protected final DependencyInjector diFactory;
 
 	protected final AddressBookFullstack fullstack;
 
@@ -97,19 +97,19 @@ public class AddressBookTesting {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookTesting(DependencyInjector injector, Path configurationFile) {
-		this.injector = injector;
+	public AddressBookTesting(DependencyInjector diFactory, Path configurationFile) {
+		this.diFactory = diFactory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		configuration = injector.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = injector.create(DollarTypeResolver.class);
+		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		typeResolver = diFactory.create(DollarTypeResolver.class);
 
-		fullstack = injector.create(AddressBookFullstack.class,
-				Java.hashMap("factory", new DependencyInjector(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
+		fullstack = diFactory.create(AddressBookFullstack.class,
+				Java.hashMap("diFactory", new DependencyInjector(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
 						AddressBookFullstack.INSTANCE::get), "configurationFile", configurationFile));
 
 		{
-			var f = injector.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
+			var f = diFactory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
 					.flatMap(x -> Arrays.stream(x.getMethods()).filter(y -> !Modifier.isStatic(y.getModifiers()))
 							.map(y -> new ClassAndMethod(x, y)))
 					.toList(), "files",
@@ -138,8 +138,8 @@ public class AddressBookTesting {
 		return configuration;
 	}
 
-	public DependencyInjector injector() {
-		return injector;
+	public DependencyInjector diFactory() {
+		return diFactory;
 	}
 
 	public AddressBookFullstack fullstack() {
@@ -155,6 +155,6 @@ public class AddressBookTesting {
 	}
 
 	public Collection<Class<?>> types() {
-		return injector.types();
+		return diFactory.types();
 	}
 }

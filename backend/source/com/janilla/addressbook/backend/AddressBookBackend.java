@@ -39,7 +39,7 @@ import javax.net.ssl.SSLContext;
 
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
-import com.janilla.ioc.DependencyInjector;
+import com.janilla.ioc.DiFactory;
 import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.TypeResolver;
@@ -59,9 +59,9 @@ public class AddressBookBackend {
 		try {
 			AddressBookBackend a;
 			{
-				var f = new DependencyInjector(Java.getPackageClasses(AddressBookBackend.class.getPackageName()), INSTANCE::get);
+				var f = new DiFactory(Java.getPackageClasses(AddressBookBackend.class.getPackageName()), INSTANCE::get);
 				a = f.create(AddressBookBackend.class,
-						Java.hashMap("factory", f, "configurationFile",
+						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
 										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
 												: args[0])
@@ -75,7 +75,7 @@ public class AddressBookBackend {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.backend.server.port"));
-				s = a.injector.create(HttpServer.class,
+				s = a.diFactory.create(HttpServer.class,
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -86,7 +86,7 @@ public class AddressBookBackend {
 
 	protected final Properties configuration;
 
-	protected final DependencyInjector injector;
+	protected final DiFactory diFactory;
 
 	protected final HttpHandler handler;
 
@@ -96,25 +96,25 @@ public class AddressBookBackend {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookBackend(DependencyInjector injector, Path configurationFile) {
-		this.injector = injector;
+	public AddressBookBackend(DiFactory diFactory, Path configurationFile) {
+		this.diFactory = diFactory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
-		configuration = injector.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = injector.create(DollarTypeResolver.class);
+		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		{
 			var f = configuration.getProperty("address-book.database.file");
 			if (f.startsWith("~"))
 				f = System.getProperty("user.home") + f.substring(1);
-			var b = injector.create(ApplicationPersistenceBuilder.class, Map.of("databaseFile", Path.of(f)));
+			var b = diFactory.create(ApplicationPersistenceBuilder.class, Map.of("databaseFile", Path.of(f)));
 			persistence = b.build();
 		}
 
 		renderableFactory = new RenderableFactory();
 
 		{
-			var f = injector.create(ApplicationHandlerFactory.class, Map.of("methods",
+			var f = diFactory.create(ApplicationHandlerFactory.class, Map.of("methods",
 					types().stream().flatMap(x -> Arrays.stream(x.getMethods())
 							.filter(y -> !Modifier.isStatic(y.getModifiers())).map(y -> new ClassAndMethod(x, y)))
 							.toList(),
@@ -136,8 +136,8 @@ public class AddressBookBackend {
 		return configuration;
 	}
 
-	public DependencyInjector injector() {
-		return injector;
+	public DiFactory diFactory() {
+		return diFactory;
 	}
 
 	public HttpHandler handler() {
@@ -157,6 +157,6 @@ public class AddressBookBackend {
 	}
 
 	public Collection<Class<?>> types() {
-		return injector.types();
+		return diFactory.types();
 	}
 }
