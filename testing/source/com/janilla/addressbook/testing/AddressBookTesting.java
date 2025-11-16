@@ -41,7 +41,7 @@ import javax.net.ssl.SSLContext;
 import com.janilla.addressbook.fullstack.AddressBookFullstack;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
-import com.janilla.ioc.DependencyInjector;
+import com.janilla.ioc.DiFactory;
 import com.janilla.java.Java;
 import com.janilla.json.DollarTypeResolver;
 import com.janilla.json.TypeResolver;
@@ -61,7 +61,7 @@ public class AddressBookTesting {
 		try {
 			AddressBookTesting a;
 			{
-				var f = new DependencyInjector(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
+				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
 						AddressBookTesting.INSTANCE::get);
 				a = f.create(AddressBookTesting.class,
 						Java.hashMap("diFactory", f, "configurationFile",
@@ -89,7 +89,7 @@ public class AddressBookTesting {
 
 	protected final Properties configuration;
 
-	protected final DependencyInjector diFactory;
+	protected final DiFactory diFactory;
 
 	protected final AddressBookFullstack fullstack;
 
@@ -97,7 +97,7 @@ public class AddressBookTesting {
 
 	protected final TypeResolver typeResolver;
 
-	public AddressBookTesting(DependencyInjector diFactory, Path configurationFile) {
+	public AddressBookTesting(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
@@ -105,7 +105,7 @@ public class AddressBookTesting {
 		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		fullstack = diFactory.create(AddressBookFullstack.class,
-				Java.hashMap("diFactory", new DependencyInjector(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
+				Java.hashMap("diFactory", new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
 						AddressBookFullstack.INSTANCE::get), "configurationFile", configurationFile));
 
 		{
@@ -138,7 +138,7 @@ public class AddressBookTesting {
 		return configuration;
 	}
 
-	public DependencyInjector diFactory() {
+	public DiFactory diFactory() {
 		return diFactory;
 	}
 
