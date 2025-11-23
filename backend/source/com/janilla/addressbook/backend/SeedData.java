@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 
-import com.janilla.json.Converter;
+import com.janilla.java.Converter;
 import com.janilla.json.Json;
 
 public record SeedData(List<Contact> contacts) {

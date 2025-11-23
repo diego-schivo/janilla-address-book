@@ -41,9 +41,9 @@ import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpRequest;
 import com.janilla.http.HttpServer;
 import com.janilla.ioc.DiFactory;
+import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
-import com.janilla.json.DollarTypeResolver;
-import com.janilla.json.TypeResolver;
+import com.janilla.java.TypeResolver;
 import com.janilla.net.Net;
 
 public class AddressBookFullstack {
