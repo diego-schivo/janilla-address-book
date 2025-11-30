@@ -23,30 +23,31 @@
  */
 package com.janilla.addressbook.backend;
 
-import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import com.janilla.http.HttpExchange;
 import com.janilla.http.HttpHandlerFactory;
-import com.janilla.web.Invocable;
+import com.janilla.web.Handle;
 import com.janilla.web.HandleException;
+import com.janilla.web.Invocable;
 import com.janilla.web.Invocation;
-import com.janilla.web.MethodHandlerFactory;
+import com.janilla.web.InvocationHandlerFactory;
 import com.janilla.web.RenderableFactory;
 
-public class CustomMethodHandlerFactory extends MethodHandlerFactory {
+public class CustomMethodHandlerFactory extends InvocationHandlerFactory {
 
 	public static final AtomicReference<CustomMethodHandlerFactory> INSTANCE = new AtomicReference<>();
 
 	public Properties configuration;
 
-	public CustomMethodHandlerFactory(Collection<Invocable> methods, Function<Class<?>, Object> targetResolver,
+	public CustomMethodHandlerFactory(List<Invocable> invocables, Function<Class<?>, Object> instanceResolver,
 			Comparator<Invocation> invocationComparator, RenderableFactory renderableFactory,
 			HttpHandlerFactory rootFactory) {
-		super(methods, targetResolver, invocationComparator, renderableFactory, rootFactory);
+		super(invocables, instanceResolver, invocationComparator, renderableFactory, rootFactory);
 		if (!INSTANCE.compareAndSet(null, this))
 			throw new IllegalStateException();
 	}
@@ -71,5 +72,10 @@ public class CustomMethodHandlerFactory extends MethodHandlerFactory {
 //			}
 
 		return super.handle(invocation, exchange);
+	}
+
+	protected List<String> handleMethods(String path) {
+		return invocationGroups(path).flatMap(x -> x.methods().stream())
+				.map(x -> x.getAnnotation(Handle.class).method()).toList();
 	}
 }
