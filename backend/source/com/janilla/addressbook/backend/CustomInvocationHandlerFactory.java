@@ -40,13 +40,13 @@ import com.janilla.web.Invocation;
 import com.janilla.web.InvocationHandlerFactory;
 import com.janilla.web.RenderableFactory;
 
-public class CustomMethodHandlerFactory extends InvocationHandlerFactory {
+public class CustomInvocationHandlerFactory extends InvocationHandlerFactory {
 
-	public static final AtomicReference<CustomMethodHandlerFactory> INSTANCE = new AtomicReference<>();
+	public static final AtomicReference<CustomInvocationHandlerFactory> INSTANCE = new AtomicReference<>();
 
 	public Properties configuration;
 
-	public CustomMethodHandlerFactory(List<Invocable> invocables, Function<Class<?>, Object> instanceResolver,
+	public CustomInvocationHandlerFactory(List<Invocable> invocables, Function<Class<?>, Object> instanceResolver,
 			Comparator<Invocation> invocationComparator, RenderableFactory renderableFactory,
 			HttpHandlerFactory rootFactory) {
 		super(invocables, instanceResolver, invocationComparator, renderableFactory, rootFactory);
