@@ -24,11 +24,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-module com.janilla.addressbook.test {
+package com.janilla.addressbook.frontend;
 
-	exports com.janilla.addressbook.testing;
+import com.janilla.http.SimpleHttpExchange;
+import com.janilla.http.HttpRequest;
+import com.janilla.http.HttpResponse;
 
-	opens com.janilla.addressbook.testing;
+public class FrontendExchange extends SimpleHttpExchange {
 
-	requires transitive com.janilla.addressbook.fullstack;
+	public FrontendExchange(HttpRequest request, HttpResponse response) {
+		super(request, response);
+	}
 }

@@ -1,7 +1,10 @@
 /*
  * MIT License
  *
- * Copyright (c) 2024-2025 Diego Schivo
+ * Copyright (c) React Training LLC 2015-2019
+ * Copyright (c) Remix Software Inc. 2020-2021
+ * Copyright (c) Shopify Inc. 2022-2023
+ * Copyright (c) Diego Schivo 2024-2025
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +27,12 @@
 package com.janilla.addressbook.frontend;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import com.janilla.http.HttpClient;
 import com.janilla.net.Net;
+import com.janilla.net.UriQueryBuilder;
 
 public class DataFetching {
 
@@ -44,37 +46,12 @@ public class DataFetching {
 	}
 
 	public Object contact(String id) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient.getJson(uri("/contacts/" + Net.urlEncode(id)));
+		return httpClient.getJson(
+				URI.create(configuration.getProperty("address-book.api.url") + "/contacts/" + Net.urlEncode(id)));
 	}
 
-	public Object contacts(String query) {
-		var u = configuration.getProperty("address-book.api.url");
-		return httpClient.getJson(uri("/contacts", "query", query));
-	}
-
-	protected URI uri(String path) {
-		return uri(path, (String[][]) null);
-	}
-
-	protected URI uri(String path, String name, Object value) {
-		return uri(path, new String[] { name, Objects.toString(value, null) });
-	}
-
-	protected URI uri(String path, String name1, Object value1, String name2, Object value2) {
-		return uri(path, new String[] { name1, Objects.toString(value1, null) },
-				new String[] { name2, Objects.toString(value2, null) });
-	}
-
-	protected URI uri(String path, String[]... pairs) {
-		var s = pairs != null
-				? Arrays.stream(pairs).filter(x -> x[1] != null)
-						.map(x -> Net.urlEncode(x[0]) + "=" + Net.urlEncode(x[1])).collect(Collectors.joining("&"))
-				: null;
-		var b = new StringBuilder().append(URI.create(configuration.getProperty("website-template.api.url")))
-				.append(path);
-		if (s != null && !s.isEmpty())
-			b.append('?').append(s);
-		return URI.create(b.toString());
+	public List<?> contacts(String query) {
+		return (List<?>) httpClient.getJson(URI.create(configuration.getProperty("address-book.api.url") + "/contacts?"
+				+ new UriQueryBuilder().append("query", query)));
 	}
 }

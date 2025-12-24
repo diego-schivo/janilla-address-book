@@ -24,11 +24,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-module com.janilla.addressbook.test {
+package com.janilla.addressbook.fullstack;
 
-	exports com.janilla.addressbook.testing;
+import java.net.SocketAddress;
+import java.util.Map;
 
-	opens com.janilla.addressbook.testing;
+import javax.net.ssl.SSLContext;
 
-	requires transitive com.janilla.addressbook.fullstack;
+import com.janilla.addressbook.backend.AddressBookBackend;
+import com.janilla.addressbook.frontend.AddressBookFrontend;
+import com.janilla.http.HttpExchange;
+import com.janilla.http.HttpHandler;
+import com.janilla.http.HttpRequest;
+import com.janilla.http.HttpResponse;
+import com.janilla.http.HttpServer;
+import com.janilla.ioc.Context;
+
+@Context("fullstack")
+public class CustomHttpServer extends HttpServer {
+
+	protected final AddressBookBackend backend;
+
+	protected final AddressBookFrontend frontend;
+
+	public CustomHttpServer(SSLContext sslContext, SocketAddress endpoint, HttpHandler handler,
+			AddressBookBackend backend, AddressBookFrontend frontend) {
+		super(sslContext, endpoint, handler);
+		this.backend = backend;
+		this.frontend = frontend;
+	}
+
+	@Override
+	protected HttpExchange createExchange(HttpRequest request, HttpResponse response) {
+		var x = request.getPath().startsWith("/api/") ? backend.diFactory() : frontend.diFactory();
+		return x.create(HttpExchange.class, Map.of("request", request, "response", response));
+	}
 }

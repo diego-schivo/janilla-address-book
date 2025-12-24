@@ -1,7 +1,10 @@
 /*
  * MIT License
  *
- * Copyright (c) 2024-2025 Diego Schivo
+ * Copyright (c) React Training LLC 2015-2019
+ * Copyright (c) Remix Software Inc. 2020-2021
+ * Copyright (c) Shopify Inc. 2022-2023
+ * Copyright (c) Diego Schivo 2024-2025
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +35,6 @@ import com.janilla.persistence.Index;
 import com.janilla.persistence.Store;
 
 @Store
-@Index(sort = "last")
 public record Contact(String id, Instant createdAt, String avatar, String first, String last, String twitter,
 		Boolean favorite) implements Entity<String> {
 

@@ -1,7 +1,10 @@
 /*
  * MIT License
  *
- * Copyright (c) 2024-2025 Diego Schivo
+ * Copyright (c) React Training LLC 2015-2019
+ * Copyright (c) Remix Software Inc. 2020-2021
+ * Copyright (c) Shopify Inc. 2022-2023
+ * Copyright (c) Diego Schivo 2024-2025
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +74,7 @@ public class AddressBookBackend {
 			HttpServer s;
 			{
 				SSLContext c;
-				try (var x = Net.class.getResourceAsStream("testkeys")) {
+				try (var x = Net.class.getResourceAsStream("localhost")) {
 					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.backend.server.port"));
@@ -88,7 +91,11 @@ public class AddressBookBackend {
 
 	protected final DiFactory diFactory;
 
+	protected final List<Path> files;
+
 	protected final HttpHandler handler;
+
+	protected final List<Invocable> invocables;
 
 	protected final Persistence persistence;
 
@@ -113,12 +120,14 @@ public class AddressBookBackend {
 
 		renderableFactory = new RenderableFactory();
 
+		invocables = types().stream()
+				.flatMap(x -> Arrays.stream(x.getMethods())
+						.filter(y -> !Modifier.isStatic(y.getModifiers()) && !y.isBridge())
+						.map(y -> new Invocable(x, y)))
+				.toList();
+		files = List.of();
 		{
-			var f = diFactory.create(ApplicationHandlerFactory.class, Map.of("methods",
-					types().stream().flatMap(x -> Arrays.stream(x.getMethods())
-							.filter(y -> !Modifier.isStatic(y.getModifiers())).map(y -> new Invocable(x, y)))
-							.toList(),
-					"files", List.of()));
+			var f = diFactory.create(ApplicationHandlerFactory.class);
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
 				if (h == null)
@@ -140,8 +149,16 @@ public class AddressBookBackend {
 		return diFactory;
 	}
 
+	public List<Path> files() {
+		return files;
+	}
+
 	public HttpHandler handler() {
 		return handler;
+	}
+
+	public List<Invocable> invocables() {
+		return invocables;
 	}
 
 	public Persistence persistence() {

@@ -1,7 +1,10 @@
 /*
  * MIT License
  *
- * Copyright (c) 2024-2025 Diego Schivo
+ * Copyright (c) React Training LLC 2015-2019
+ * Copyright (c) Remix Software Inc. 2020-2021
+ * Copyright (c) Shopify Inc. 2022-2023
+ * Copyright (c) Diego Schivo 2024-2025
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,25 +26,18 @@
  */
 package com.janilla.addressbook.fullstack;
 
-import java.util.Properties;
+import java.util.Map;
 
-import com.janilla.addressbook.backend.ContactApi;
-import com.janilla.addressbook.frontend.DataFetching;
-import com.janilla.http.HttpClient;
+import com.janilla.addressbook.backend.AddressBookBackend;
+import com.janilla.http.DirectHttpClient;
+import com.janilla.http.HttpServer;
+import com.janilla.ioc.Context;
 
-public class CustomDataFetching extends DataFetching {
+@Context("frontend")
+public class CustomHttpClient extends DirectHttpClient {
 
-	public CustomDataFetching(Properties configuration, HttpClient httpClient) {
-		super(configuration, httpClient);
-	}
-
-	@Override
-	public Object contacts(String query) {
-		return ContactApi.INSTANCE.get().list(query);
-	}
-
-	@Override
-	public Object contact(String id) {
-		return ContactApi.INSTANCE.get().read(id);
+	public CustomHttpClient() {
+		var b = AddressBookBackend.INSTANCE.get();
+		super(b.diFactory().create(HttpServer.class, Map.of("handler", b.handler())));
 	}
 }
