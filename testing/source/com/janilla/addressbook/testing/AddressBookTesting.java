@@ -4,7 +4,7 @@
  * Copyright (c) React Training LLC 2015-2019
  * Copyright (c) Remix Software Inc. 2020-2021
  * Copyright (c) Shopify Inc. 2022-2023
- * Copyright (c) Diego Schivo 2024-2025
+ * Copyright (c) Diego Schivo 2024-2026
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,8 +50,8 @@ import com.janilla.java.Java;
 import com.janilla.java.TypeResolver;
 import com.janilla.net.Net;
 import com.janilla.web.ApplicationHandlerFactory;
-import com.janilla.web.Invocable;
 import com.janilla.web.Handle;
+import com.janilla.web.Invocable;
 import com.janilla.web.NotFoundException;
 import com.janilla.web.Render;
 
@@ -64,8 +64,7 @@ public class AddressBookTesting {
 		try {
 			AddressBookTesting a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()),
-						AddressBookTesting.INSTANCE::get);
+				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()), INSTANCE::get);
 				a = f.create(AddressBookTesting.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -108,8 +107,10 @@ public class AddressBookTesting {
 		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		fullstack = diFactory.create(AddressBookFullstack.class,
-				Java.hashMap("diFactory", new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
-						AddressBookFullstack.INSTANCE::get), "configurationFile", configurationFile));
+				Java.hashMap("diFactory",
+						new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
+								AddressBookFullstack.INSTANCE::get),
+						"configurationFile", configurationFile));
 
 		{
 			var f = diFactory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()

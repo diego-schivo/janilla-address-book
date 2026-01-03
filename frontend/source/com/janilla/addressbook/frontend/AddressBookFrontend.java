@@ -4,7 +4,7 @@
  * Copyright (c) React Training LLC 2015-2019
  * Copyright (c) Remix Software Inc. 2020-2021
  * Copyright (c) Shopify Inc. 2022-2023
- * Copyright (c) Diego Schivo 2024-2025
+ * Copyright (c) Diego Schivo 2024-2026
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +71,7 @@ public class AddressBookFrontend {
 			AddressBookFrontend a;
 			{
 				var f = new DiFactory(Java.getPackageClasses(AddressBookFrontend.class.getPackageName()),
-						AddressBookFrontend.INSTANCE::get);
+						INSTANCE::get);
 				a = f.create(AddressBookFrontend.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -132,13 +132,13 @@ public class AddressBookFrontend {
 		}
 		dataFetching = diFactory.create(DataFetching.class);
 
-		files = Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
-				.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile)).toList();
 		invocables = types().stream()
 				.flatMap(x -> Arrays.stream(x.getMethods())
 						.filter(y -> !Modifier.isStatic(y.getModifiers()) && !y.isBridge())
 						.map(y -> new Invocable(x, y)))
 				.toList();
+		files = Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
+				.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile)).toList();
 		renderableFactory = diFactory.create(RenderableFactory.class);
 		{
 			var f = diFactory.create(ApplicationHandlerFactory.class);

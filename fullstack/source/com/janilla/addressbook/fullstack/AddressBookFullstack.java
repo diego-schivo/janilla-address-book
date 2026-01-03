@@ -4,7 +4,7 @@
  * Copyright (c) React Training LLC 2015-2019
  * Copyright (c) Remix Software Inc. 2020-2021
  * Copyright (c) Shopify Inc. 2022-2023
- * Copyright (c) Diego Schivo 2024-2025
+ * Copyright (c) Diego Schivo 2024-2026
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ public class AddressBookFullstack {
 			AddressBookFullstack a;
 			{
 				var f = new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
-						AddressBookFullstack.INSTANCE::get, "fullstack");
+						INSTANCE::get, "fullstack");
 				a = f.create(AddressBookFullstack.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(

@@ -4,7 +4,7 @@
  * Copyright (c) React Training LLC 2015-2019
  * Copyright (c) Remix Software Inc. 2020-2021
  * Copyright (c) Shopify Inc. 2022-2023
- * Copyright (c) Diego Schivo 2024-2025
+ * Copyright (c) Diego Schivo 2024-2026
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,6 @@ import com.janilla.persistence.Persistence;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Invocable;
 import com.janilla.web.NotFoundException;
-import com.janilla.web.RenderableFactory;
 
 public class AddressBookBackend {
 
@@ -99,7 +98,7 @@ public class AddressBookBackend {
 
 	protected final Persistence persistence;
 
-	protected final RenderableFactory renderableFactory;
+//	protected final RenderableFactory renderableFactory;
 
 	protected final TypeResolver typeResolver;
 
@@ -118,14 +117,13 @@ public class AddressBookBackend {
 			persistence = b.build();
 		}
 
-		renderableFactory = new RenderableFactory();
-
 		invocables = types().stream()
 				.flatMap(x -> Arrays.stream(x.getMethods())
 						.filter(y -> !Modifier.isStatic(y.getModifiers()) && !y.isBridge())
 						.map(y -> new Invocable(x, y)))
 				.toList();
 		files = List.of();
+//		renderableFactory = diFactory.create(RenderableFactory.class);
 		{
 			var f = diFactory.create(ApplicationHandlerFactory.class);
 			handler = x -> {
@@ -165,9 +163,9 @@ public class AddressBookBackend {
 		return persistence;
 	}
 
-	public RenderableFactory renderableFactory() {
-		return renderableFactory;
-	}
+//	public RenderableFactory renderableFactory() {
+//		return renderableFactory;
+//	}
 
 	public TypeResolver typeResolver() {
 		return typeResolver;
