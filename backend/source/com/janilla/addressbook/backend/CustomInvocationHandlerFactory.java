@@ -64,7 +64,9 @@ public class CustomInvocationHandlerFactory extends InvocationHandlerFactory {
 				throw new HandleException(new MethodBlockedException());
 		}
 
-		rs.setHeaderValue("access-control-allow-origin", configuration.getProperty("address-book.api.cors.origin"));
+		var o = configuration.getProperty("address-book.api.cors.origin");
+		if (o != null && !o.isEmpty())
+			rs.setHeaderValue("access-control-allow-origin", o);
 
 //		if (rq.getPath().startsWith("/api/"))
 //			try {
