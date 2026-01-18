@@ -30,5 +30,5 @@ module com.janilla.addressbook.frontend {
 
 	opens com.janilla.addressbook.frontend;
 
-	requires transitive com.janilla;
+	requires transitive com.janilla.frontend;
 }

@@ -30,9 +30,9 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.janilla.persistence.Entity;
-import com.janilla.persistence.Index;
-import com.janilla.persistence.Store;
+import com.janilla.backend.persistence.Entity;
+import com.janilla.backend.persistence.Index;
+import com.janilla.backend.persistence.Store;
 
 @Store
 public record Contact(String id, Instant createdAt, String avatar, String first, String last, String twitter,
