@@ -72,8 +72,7 @@
 	</developers>
 	<scm>
 		<connection>scm:git:git://github.com/diego-schivo/janilla-address-book.git</connection>
-		<developerConnection>
-			scm:git:ssh://git@github.com/diego-schivo/janilla-address-book.git</developerConnection>
+		<developerConnection>scm:git:ssh://git@github.com/diego-schivo/janilla-address-book.git</developerConnection>
 		<url>https://github.com/diego-schivo/janilla-address-book</url>
 		<tag>HEAD</tag>
 	</scm>

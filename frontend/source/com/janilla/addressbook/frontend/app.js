@@ -69,8 +69,8 @@ export default class App extends WebComponent {
 					$template: "sidebar",
 					slot: (h || c) ? (hs?.contacts ? "content" : "new-content") : null,
 					href: location.pathname + location.search,
-					loading: (h || c) && !(sl?.state ?? hs)?.contacts,
-					pending: c && c[1] != ((ce ?? ec)?.state?.contact ?? hs?.contact)?.id
+					loading: (h || c) && !(sl?.customState ?? hs)?.contacts,
+					pending: c && c[1] != ((ce ?? ec)?.customState?.contact ?? hs?.contact)?.id
 				};
 			})(),
 			about: {
@@ -106,7 +106,7 @@ export default class App extends WebComponent {
 	}
 
 	handlePopState = event => {
-		this.popState = event.state;
+		this.popState = event.customState;
 		this.requestDisplay();
 	}
 }

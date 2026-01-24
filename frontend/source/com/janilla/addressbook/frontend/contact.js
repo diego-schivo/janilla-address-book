@@ -53,7 +53,7 @@ export default class ContactPage extends WebComponent {
 	}
 
 	async updateDisplay() {
-		const s = this.state;
+		const s = this.customState;
 		if (this.slot) {
 			const a = this.closest("app-element");
 			const ps = a.popState;
@@ -93,7 +93,7 @@ export default class ContactPage extends WebComponent {
 	handleSubmit = async event => {
 		event.preventDefault();
 		event.stopPropagation();
-		const s = this.state;
+		const s = this.customState;
 		switch (event.target.method) {
 			case "get":
 				const u = new URL(`/contacts/${s.contact.id}/edit`, location.href);
@@ -109,7 +109,7 @@ export default class ContactPage extends WebComponent {
 					const r = await fetch(`${a.dataset.apiUrl}/contacts/${s.contact.id}`, { method: "DELETE" });
 					if (r.ok) {
 						delete s.contact;
-						delete this.closest("sidebar-layout").state.contacts;
+						delete this.closest("sidebar-layout").customState.contacts;
 						history.pushState(history.state, "", "/");
 						dispatchEvent(new CustomEvent("popstate"));
 					} else
@@ -120,7 +120,7 @@ export default class ContactPage extends WebComponent {
 	}
 
 	handleToggleFavorite = async event => {
-		const s = this.state;
+		const s = this.customState;
 		s.contact.favorite = event.detail.favorite;
 		this.requestDisplay();
 		const a = this.closest("app-element");
@@ -131,7 +131,7 @@ export default class ContactPage extends WebComponent {
 		});
 		if (r.ok) {
 			s.contact = await r.json();
-			delete this.closest("sidebar-layout").state.contacts;
+			delete this.closest("sidebar-layout").customState.contacts;
 			history.pushState(history.state, "", "/");
 			dispatchEvent(new CustomEvent("popstate"));
 		} else

@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
@@ -48,7 +47,7 @@ import com.janilla.ioc.DiFactory;
 import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
 import com.janilla.java.TypeResolver;
-import com.janilla.net.Net;
+import com.janilla.net.SecureServer;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
 import com.janilla.web.Invocable;
@@ -58,13 +57,11 @@ import com.janilla.web.Render;
 @Render(template = "index.html")
 public class AddressBookTesting {
 
-	public static final AtomicReference<AddressBookTesting> INSTANCE = new AtomicReference<>();
-
 	public static void main(String[] args) {
 		try {
 			AddressBookTesting a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()), INSTANCE::get);
+				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()));
 				a = f.create(AddressBookTesting.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -76,8 +73,8 @@ public class AddressBookTesting {
 			HttpServer s;
 			{
 				SSLContext c;
-				try (var x = Net.class.getResourceAsStream("localhost")) {
-					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
+				try (var x = SecureServer.class.getResourceAsStream("localhost")) {
+					c = Java.sslContext(x, "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
 				s = a.diFactory.create(HttpServer.class,
@@ -101,15 +98,13 @@ public class AddressBookTesting {
 
 	public AddressBookTesting(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
-		if (!INSTANCE.compareAndSet(null, this))
-			throw new IllegalStateException();
+		diFactory.context(this);
 		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
 		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		fullstack = diFactory.create(AddressBookFullstack.class,
 				Java.hashMap("diFactory",
-						new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
-								AddressBookFullstack.INSTANCE::get),
+						new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName())),
 						"configurationFile", configurationFile));
 
 		{

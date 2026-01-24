@@ -48,7 +48,7 @@ import com.janilla.ioc.DiFactory;
 import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
 import com.janilla.java.TypeResolver;
-import com.janilla.net.Net;
+import com.janilla.net.SecureServer;
 
 public class AddressBookFullstack {
 
@@ -58,8 +58,7 @@ public class AddressBookFullstack {
 		try {
 			AddressBookFullstack a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()),
-						INSTANCE::get, "fullstack");
+				var f = new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()), "fullstack");
 				a = f.create(AddressBookFullstack.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -71,8 +70,8 @@ public class AddressBookFullstack {
 			HttpServer s;
 			{
 				SSLContext c;
-				try (var x = Net.class.getResourceAsStream("localhost")) {
-					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
+				try (var x = SecureServer.class.getResourceAsStream("localhost")) {
+					c = Java.sslContext(x, "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.fullstack.server.port"));
 				s = a.diFactory.create(HttpServer.class,
@@ -118,26 +117,22 @@ public class AddressBookFullstack {
 		backend = diFactory
 				.create(AddressBookBackend.class,
 						Java.hashMap("diFactory",
-								new DiFactory(
-										Stream.concat(
-												Stream.of("fullstack", "backend")
+								new DiFactory(Stream
+										.concat(Stream.of("com.janilla.web"),
+												Stream.of("backend", "fullstack")
 														.map(x -> AddressBookBackend.class.getPackageName()
-																.replace(".backend", "." + x)),
-												Stream.of("com.janilla.web"))
-												.flatMap(x -> Java.getPackageClasses(x).stream()).toList(),
-										AddressBookBackend.INSTANCE::get, "backend"),
+																.replace(".backend", "." + x)))
+										.flatMap(x -> Java.getPackageClasses(x).stream()).toList(), "backend"),
 								"configurationFile", cf));
 		frontend = diFactory
 				.create(AddressBookFrontend.class,
 						Java.hashMap("diFactory",
-								new DiFactory(
-										Stream.concat(
-												Stream.of("fullstack", "frontend")
+								new DiFactory(Stream
+										.concat(Stream.of("com.janilla.web"),
+												Stream.of("frontend", "fullstack")
 														.map(x -> AddressBookFrontend.class.getPackageName()
-																.replace(".frontend", "." + x)),
-												Stream.of("com.janilla.web"))
-												.flatMap(x -> Java.getPackageClasses(x).stream()).toList(),
-										AddressBookFrontend.INSTANCE::get, "frontend"),
+																.replace(".frontend", "." + x)))
+										.flatMap(x -> Java.getPackageClasses(x).stream()).toList(), "frontend"),
 								"configurationFile", cf));
 	}
 

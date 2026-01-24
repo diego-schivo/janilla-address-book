@@ -53,7 +53,7 @@ export default class EditContact extends WebComponent {
 	}
 
 	async updateDisplay() {
-		const s = this.state;
+		const s = this.customState;
 		if (this.slot) {
 			const a = this.closest("app-element");
 			const ps = a.popState;
@@ -82,7 +82,7 @@ export default class EditContact extends WebComponent {
 		event.preventDefault();
 		event.stopPropagation();
 		const a = this.closest("app-element");
-		const s = this.state;
+		const s = this.customState;
 		const r = await fetch(`${a.dataset.apiUrl}/contacts/${s.contact.id}`, {
 			method: "PUT",
 			headers: { "content-type": "application/json" },
@@ -90,7 +90,7 @@ export default class EditContact extends WebComponent {
 		});
 		if (r.ok) {
 			s.contact = await r.json();
-			delete this.closest("sidebar-layout").state.contacts;
+			delete this.closest("sidebar-layout").customState.contacts;
 			history.pushState({
 				...history.state,
 				contact: s.contact

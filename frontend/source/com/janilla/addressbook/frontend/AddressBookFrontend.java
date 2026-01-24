@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
@@ -51,9 +50,7 @@ import com.janilla.ioc.DiFactory;
 import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
 import com.janilla.java.TypeResolver;
-import com.janilla.json.Json;
-import com.janilla.json.ReflectionJsonIterator;
-import com.janilla.net.Net;
+import com.janilla.net.SecureServer;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
 import com.janilla.web.Invocable;
@@ -64,14 +61,11 @@ import com.janilla.web.Renderer;
 
 public class AddressBookFrontend {
 
-	public static final AtomicReference<AddressBookFrontend> INSTANCE = new AtomicReference<>();
-
 	public static void main(String[] args) {
 		try {
 			AddressBookFrontend a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookFrontend.class.getPackageName()),
-						INSTANCE::get);
+				var f = new DiFactory(Java.getPackageClasses(AddressBookFrontend.class.getPackageName()));
 				a = f.create(AddressBookFrontend.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -83,8 +77,8 @@ public class AddressBookFrontend {
 			HttpServer s;
 			{
 				SSLContext c;
-				try (var x = Net.class.getResourceAsStream("localhost")) {
-					c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
+				try (var x = SecureServer.class.getResourceAsStream("localhost")) {
+					c = Java.sslContext(x, "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.frontend.server.port"));
 				s = a.diFactory.create(HttpServer.class,
@@ -116,15 +110,14 @@ public class AddressBookFrontend {
 
 	public AddressBookFrontend(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
-		if (!INSTANCE.compareAndSet(null, this))
-			throw new IllegalStateException();
+		diFactory.context(this);
 		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
 		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		{
 			SSLContext c;
-			try (var x = Net.class.getResourceAsStream("localhost")) {
-				c = Net.getSSLContext(Map.entry("JKS", x), "passphrase".toCharArray());
+			try (var x = SecureServer.class.getResourceAsStream("localhost")) {
+				c = Java.sslContext(x, "passphrase".toCharArray());
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
@@ -217,8 +210,9 @@ public class AddressBookFrontend {
 
 		@Override
 		public String apply(T value) {
-			return Json.format(INSTANCE.get().diFactory.create(ReflectionJsonIterator.class,
-					Map.of("object", value, "includeType", false)));
+//			return Json.format(INSTANCE.get().diFactory.create(ReflectionJsonIterator.class,
+//					Map.of("object", value, "includeType", false)));
+			throw new RuntimeException();
 		}
 	}
 }

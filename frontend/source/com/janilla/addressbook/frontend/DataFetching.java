@@ -27,12 +27,13 @@
 package com.janilla.addressbook.frontend;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 
 import com.janilla.http.HttpClient;
-import com.janilla.net.Net;
-import com.janilla.net.UriQueryBuilder;
+import com.janilla.java.UriQueryBuilder;
 
 public class DataFetching {
 
@@ -46,8 +47,8 @@ public class DataFetching {
 	}
 
 	public Object contact(String id) {
-		return httpClient.getJson(
-				URI.create(configuration.getProperty("address-book.api.url") + "/contacts/" + Net.urlEncode(id)));
+		return httpClient.getJson(URI.create(configuration.getProperty("address-book.api.url") + "/contacts/"
+				+ URLEncoder.encode(id, StandardCharsets.UTF_8)));
 	}
 
 	public List<?> contacts(String query) {

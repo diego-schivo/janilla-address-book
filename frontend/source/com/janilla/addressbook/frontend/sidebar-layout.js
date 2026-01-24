@@ -54,7 +54,7 @@ export default class SidebarLayout extends WebComponent {
 	}
 
 	async updateDisplay() {
-		const s = this.state;
+		const s = this.customState;
 		if (this.slot) {
 			const a = this.closest("app-element");
 			const ps = a.popState;
@@ -108,7 +108,7 @@ export default class SidebarLayout extends WebComponent {
 					if (x.slot) {
 						x.id = c[1];
 						const ce = this.querySelector("contact-element");
-						x.loading = x.id != (ce?.state?.contact ?? hs?.contact)?.id;
+						x.loading = x.id != (ce?.customState?.contact ?? hs?.contact)?.id;
 					}
 					return x;
 				})(),
@@ -120,7 +120,7 @@ export default class SidebarLayout extends WebComponent {
 					if (x.slot) {
 						x.id = c[1];
 						const ec = this.querySelector("edit-contact");
-						x.loading = x.id != (ec?.state?.contact ?? hs?.contact)?.id;
+						x.loading = x.id != (ec?.customState?.contact ?? hs?.contact)?.id;
 					}
 					return x;
 				})()
@@ -154,7 +154,7 @@ export default class SidebarLayout extends WebComponent {
 				if (typeof this.inputTimeout === "number")
 					clearTimeout(this.inputTimeout);
 				this.inputTimeout = setTimeout(() => {
-					delete this.state.contacts;
+					delete this.customState.contacts;
 					const u = new URL(location.href);
 					u.searchParams.set("q", q);
 					if (!q0)
@@ -180,7 +180,7 @@ export default class SidebarLayout extends WebComponent {
 			});
 			if (r.ok) {
 				const c = await r.json();
-				delete this.state.contacts;
+				delete this.customState.contacts;
 				history.pushState({
 					...history.state,
 					contact: c
