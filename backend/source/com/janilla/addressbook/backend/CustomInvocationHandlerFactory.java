@@ -70,7 +70,7 @@ public class CustomInvocationHandlerFactory extends InvocationHandlerFactory {
 
 //		if (rq.getPath().startsWith("/api/"))
 //			try {
-//				Thread.sleep(500);
+//				TimeUnit.SECONDS.sleep(1);
 //			} catch (InterruptedException e) {
 //				e.printStackTrace();
 //			}

@@ -58,7 +58,7 @@ public class AddressBookFullstack {
 		try {
 			AddressBookFullstack a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName()), "fullstack");
+				var f = new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName(), true), "fullstack");
 				a = f.create(AddressBookFullstack.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -122,7 +122,7 @@ public class AddressBookFullstack {
 												Stream.of("backend", "fullstack")
 														.map(x -> AddressBookBackend.class.getPackageName()
 																.replace(".backend", "." + x)))
-										.flatMap(x -> Java.getPackageClasses(x).stream()).toList(), "backend"),
+										.flatMap(x -> Java.getPackageClasses(x, true).stream()).toList(), "backend"),
 								"configurationFile", cf));
 		frontend = diFactory
 				.create(AddressBookFrontend.class,
@@ -132,7 +132,7 @@ public class AddressBookFullstack {
 												Stream.of("frontend", "fullstack")
 														.map(x -> AddressBookFrontend.class.getPackageName()
 																.replace(".frontend", "." + x)))
-										.flatMap(x -> Java.getPackageClasses(x).stream()).toList(), "frontend"),
+										.flatMap(x -> Java.getPackageClasses(x, true).stream()).toList(), "frontend"),
 								"configurationFile", cf));
 	}
 

@@ -61,7 +61,7 @@ public class AddressBookTesting {
 		try {
 			AddressBookTesting a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName()));
+				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName(), true));
 				a = f.create(AddressBookTesting.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
@@ -104,7 +104,7 @@ public class AddressBookTesting {
 
 		fullstack = diFactory.create(AddressBookFullstack.class,
 				Java.hashMap("diFactory",
-						new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName())),
+						new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName(), true)),
 						"configurationFile", configurationFile));
 
 		{
@@ -113,7 +113,7 @@ public class AddressBookTesting {
 							.map(y -> new Invocable(x, y)))
 					.toList(), "files",
 					Stream.of("com.janilla.frontend", AddressBookTesting.class.getPackageName())
-							.flatMap(x -> Java.getPackagePaths(x).stream().filter(Files::isRegularFile)).toList()));
+							.flatMap(x -> Java.getPackagePaths(x, true).filter(Files::isRegularFile)).toList()));
 			handler = x -> {
 //				IO.println("AddressBookTest, " + x.request().getPath() + ", Test.ongoing=" + Test.ONGOING.get());
 				var h2 = Test.ONGOING.get() && !x.request().getPath().startsWith("/test/") ? fullstack.handler()

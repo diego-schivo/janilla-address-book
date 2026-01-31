@@ -58,7 +58,7 @@ public class AddressBookBackend {
 		try {
 			AddressBookBackend a;
 			{
-				var f = new DiFactory(Java.getPackageClasses(AddressBookBackend.class.getPackageName()));
+				var f = new DiFactory(Java.getPackageClasses(AddressBookBackend.class.getPackageName(), true));
 				a = f.create(AddressBookBackend.class,
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
