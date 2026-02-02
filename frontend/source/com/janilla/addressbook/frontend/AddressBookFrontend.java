@@ -33,7 +33,6 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +46,9 @@ import com.janilla.http.HttpClient;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
 import com.janilla.ioc.DiFactory;
-import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
-import com.janilla.java.TypeResolver;
+import com.janilla.json.Json;
+import com.janilla.json.ReflectionJsonIterator;
 import com.janilla.net.SecureServer;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Handle;
@@ -58,6 +57,7 @@ import com.janilla.web.NotFoundException;
 import com.janilla.web.Render;
 import com.janilla.web.RenderableFactory;
 import com.janilla.web.Renderer;
+import com.janilla.web.ResourceMap;
 
 public class AddressBookFrontend {
 
@@ -96,8 +96,6 @@ public class AddressBookFrontend {
 
 	protected final DiFactory diFactory;
 
-	protected final List<Path> files;
-
 	protected final HttpHandler handler;
 
 	protected final HttpClient httpClient;
@@ -106,13 +104,12 @@ public class AddressBookFrontend {
 
 	protected final RenderableFactory renderableFactory;
 
-	protected final TypeResolver typeResolver;
+	protected final ResourceMap resourceMap;
 
 	public AddressBookFrontend(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
 		diFactory.context(this);
 		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = diFactory.create(DollarTypeResolver.class);
 
 		{
 			SSLContext c;
@@ -125,13 +122,14 @@ public class AddressBookFrontend {
 		}
 		dataFetching = diFactory.create(DataFetching.class);
 
-		invocables = types().stream()
+		invocables = diFactory.types().stream()
 				.flatMap(x -> Arrays.stream(x.getMethods())
 						.filter(y -> !Modifier.isStatic(y.getModifiers()) && !y.isBridge())
 						.map(y -> new Invocable(x, y)))
 				.toList();
-		files = Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
-				.flatMap(x -> Java.getPackagePaths(x, true).filter(Files::isRegularFile)).toList();
+		resourceMap = diFactory.create(ResourceMap.class,
+				Map.of("paths", Map.of("", Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
+						.flatMap(x -> Java.getPackagePaths(x, false).filter(Files::isRegularFile)).toList())));
 		renderableFactory = diFactory.create(RenderableFactory.class);
 		{
 			var f = diFactory.create(ApplicationHandlerFactory.class);
@@ -144,20 +142,12 @@ public class AddressBookFrontend {
 		}
 	}
 
-	public AddressBookFrontend application() {
-		return this;
-	}
-
 	public Properties configuration() {
 		return configuration;
 	}
 
 	public DiFactory diFactory() {
 		return diFactory;
-	}
-
-	public List<Path> files() {
-		return files;
 	}
 
 	public HttpHandler handler() {
@@ -176,12 +166,8 @@ public class AddressBookFrontend {
 		return renderableFactory;
 	}
 
-	public TypeResolver typeResolver() {
-		return typeResolver;
-	}
-
-	public Collection<Class<?>> types() {
-		return diFactory.types();
+	public ResourceMap resourceMap() {
+		return resourceMap;
 	}
 
 	@Handle(method = "GET", path = "/")
@@ -208,11 +194,15 @@ public class AddressBookFrontend {
 
 	public static class StateRenderer<T> extends Renderer<T> {
 
+		protected final DiFactory diFactory;
+
+		public StateRenderer(DiFactory diFactory) {
+			this.diFactory = diFactory;
+		}
+
 		@Override
 		public String apply(T value) {
-//			return Json.format(INSTANCE.get().diFactory.create(ReflectionJsonIterator.class,
-//					Map.of("object", value, "includeType", false)));
-			throw new RuntimeException();
+			return Json.format(diFactory.create(ReflectionJsonIterator.class, Map.of("object", value)));
 		}
 	}
 }

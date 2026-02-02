@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.janilla.backend.persistence.Persistence;
 import com.janilla.java.Reflection;
@@ -42,13 +41,14 @@ import com.janilla.web.NotFoundException;
 @Handle(path = "/api/contacts")
 public class ContactApi {
 
-	public static final AtomicReference<ContactApi> INSTANCE = new AtomicReference<>();
+//	public static final AtomicReference<ContactApi> INSTANCE = new AtomicReference<>();
 
-	public Persistence persistence;
+	protected final Persistence persistence;
 
-	public ContactApi() {
-		if (!INSTANCE.compareAndSet(null, this))
-			throw new IllegalStateException();
+	public ContactApi(Persistence persistence) {
+//		if (!INSTANCE.compareAndSet(null, this))
+//			throw new IllegalStateException();
+		this.persistence = persistence;
 	}
 
 	@Handle(method = "GET")

@@ -29,7 +29,6 @@ package com.janilla.addressbook.backend;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import com.janilla.http.HttpExchange;
@@ -42,16 +41,17 @@ import com.janilla.web.RenderableFactory;
 
 public class CustomInvocationHandlerFactory extends InvocationHandlerFactory {
 
-	public static final AtomicReference<CustomInvocationHandlerFactory> INSTANCE = new AtomicReference<>();
+//	public static final AtomicReference<CustomInvocationHandlerFactory> INSTANCE = new AtomicReference<>();
 
-	public Properties configuration;
+	protected final Properties configuration;
 
 	public CustomInvocationHandlerFactory(List<Invocable> invocables, Function<Class<?>, Object> instanceResolver,
 			Comparator<Invocation> invocationComparator, RenderableFactory renderableFactory,
-			HttpHandlerFactory rootFactory) {
+			HttpHandlerFactory rootFactory, Properties configuration) {
 		super(invocables, instanceResolver, invocationComparator, renderableFactory, rootFactory);
-		if (!INSTANCE.compareAndSet(null, this))
-			throw new IllegalStateException();
+//		if (!INSTANCE.compareAndSet(null, this))
+//			throw new IllegalStateException();
+		this.configuration = configuration;
 	}
 
 	@Override

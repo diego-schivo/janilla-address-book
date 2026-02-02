@@ -27,7 +27,6 @@
 package com.janilla.addressbook.backend;
 
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import com.janilla.http.HttpRequest;
 import com.janilla.http.HttpResponse;
@@ -39,14 +38,15 @@ public class Cors {
 
 	@Handle(method = "OPTIONS", path = "/api/(.*)")
 	public void allow(HttpRequest request, HttpResponse response) {
-		var o = configuration.getProperty("address-book.api.cors.origin");
-		var m = CustomInvocationHandlerFactory.INSTANCE.get().handleMethods(request.getPath());
-		var h = configuration.getProperty("address-book.api.cors.headers");
-
-		response.setStatus(204);
-		response.setHeaderValue("access-control-allow-origin", o);
-		response.setHeaderValue("access-control-allow-methods",
-				m.contains(null) ? "*" : m.stream().collect(Collectors.joining(", ")));
-		response.setHeaderValue("access-control-allow-headers", h);
+//		var o = configuration.getProperty("address-book.api.cors.origin");
+//		var m = CustomInvocationHandlerFactory.INSTANCE.get().handleMethods(request.getPath());
+//		var h = configuration.getProperty("address-book.api.cors.headers");
+//
+//		response.setStatus(204);
+//		response.setHeaderValue("access-control-allow-origin", o);
+//		response.setHeaderValue("access-control-allow-methods",
+//				m.contains(null) ? "*" : m.stream().collect(Collectors.joining(", ")));
+//		response.setHeaderValue("access-control-allow-headers", h);
+		throw new RuntimeException();
 	}
 }
