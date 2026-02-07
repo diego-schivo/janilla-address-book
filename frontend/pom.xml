@@ -23,9 +23,9 @@
 				<configuration>
 					<executable>java</executable>
 					<arguments>
-						<argument>-p</argument>
+						<argument>--module-path</argument>
 						<modulepath/>
-						<argument>-m</argument>
+						<argument>--module</argument>
 						<argument>com.janilla.addressbook.frontend/com.janilla.addressbook.frontend.AddressBookFrontend</argument>
 					</arguments>
 				</configuration>

@@ -33,19 +33,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.janilla.ioc.DiFactory;
-import com.janilla.backend.persistence.ApplicationPersistenceBuilder;
+import com.janilla.backend.persistence.PersistenceBuilder;
 import com.janilla.backend.persistence.Persistence;
 
-public class CustomPersistenceBuilder extends ApplicationPersistenceBuilder {
+public class CustomPersistenceBuilder extends PersistenceBuilder {
 
-	public CustomPersistenceBuilder(Path databaseFile, DiFactory diFactory) {
-		super(databaseFile, diFactory);
+	public CustomPersistenceBuilder(Path databaseFile) {
+		super(databaseFile);
 	}
 
 	@Override
-	public Persistence build() {
+	public Persistence build(DiFactory diFactory) {
 		var e = Files.exists(databaseFile);
-		var x = super.build();
+		var x = super.build(diFactory);
 		if (!e) {
 			var d = SeedData.read();
 			for (var c : d.contacts()) {
