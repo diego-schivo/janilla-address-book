@@ -82,7 +82,7 @@ public class AddressBookFrontend {
 
 		HttpServer s;
 		{
-			var p = Integer.parseInt(a.configuration.getProperty("address-book.frontend.server.port"));
+			var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
 			s = a.diFactory.create(HttpServer.class,
 					Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 		}
@@ -90,8 +90,8 @@ public class AddressBookFrontend {
 	}
 
 	protected static SSLContext sslContext(Properties configuration) {
-		var p = configuration.getProperty("address-book.frontend.server.keystore.path");
-		var w = configuration.getProperty("address-book.frontend.server.keystore.password");
+		var p = configuration.getProperty("address-book.server.keystore.path");
+		var w = configuration.getProperty("address-book.server.keystore.password");
 		if (p.startsWith("~"))
 			p = System.getProperty("user.home") + p.substring(1);
 		var f = Path.of(p);

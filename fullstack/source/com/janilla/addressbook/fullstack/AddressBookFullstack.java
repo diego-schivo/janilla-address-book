@@ -70,8 +70,8 @@ public class AddressBookFullstack {
 
 		SSLContext c;
 		{
-			var p = a.configuration.getProperty("address-book.fullstack.server.keystore.path");
-			var w = a.configuration.getProperty("address-book.fullstack.server.keystore.password");
+			var p = a.configuration.getProperty("address-book.server.keystore.path");
+			var w = a.configuration.getProperty("address-book.server.keystore.password");
 			if (p.startsWith("~"))
 				p = System.getProperty("user.home") + p.substring(1);
 			var f = Path.of(p);
@@ -86,7 +86,7 @@ public class AddressBookFullstack {
 
 		HttpServer s;
 		{
-			var p = Integer.parseInt(a.configuration.getProperty("address-book.fullstack.server.port"));
+			var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
 			s = a.diFactory.create(HttpServer.class,
 					Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 		}
