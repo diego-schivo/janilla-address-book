@@ -32,9 +32,9 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.janilla.ioc.DiFactory;
-import com.janilla.backend.persistence.PersistenceBuilder;
 import com.janilla.backend.persistence.Persistence;
+import com.janilla.backend.persistence.PersistenceBuilder;
+import com.janilla.ioc.DiFactory;
 
 public class CustomPersistenceBuilder extends PersistenceBuilder {
 
@@ -48,6 +48,7 @@ public class CustomPersistenceBuilder extends PersistenceBuilder {
 		var x = super.build(diFactory);
 		if (!e) {
 			var d = SeedData.read();
+			IO.println("CustomPersistenceBuilder.build, d=" + d);
 			for (var c : d.contacts()) {
 				c = c.withId(Stream.of(c.first(), c.last()).map(y -> y.toLowerCase().replace(' ', '_'))
 						.collect(Collectors.joining("-"))).withCreatedAt(Instant.now());

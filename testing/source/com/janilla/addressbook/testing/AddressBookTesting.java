@@ -62,7 +62,7 @@ public class AddressBookTesting {
 			AddressBookTesting a;
 			{
 				var f = new DiFactory(Java.getPackageClasses(AddressBookTesting.class.getPackageName(), true));
-				a = f.create(AddressBookTesting.class,
+				a = f.create(f.actualType(AddressBookTesting.class),
 						Java.hashMap("diFactory", f, "configurationFile",
 								args.length > 0 ? Path.of(
 										args[0].startsWith("~") ? System.getProperty("user.home") + args[0].substring(1)
@@ -77,7 +77,7 @@ public class AddressBookTesting {
 					c = Java.sslContext(x, "passphrase".toCharArray());
 				}
 				var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
-				s = a.diFactory.create(HttpServer.class,
+				s = a.diFactory.create(a.diFactory.actualType(HttpServer.class),
 						Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 			}
 			s.serve();
@@ -99,16 +99,16 @@ public class AddressBookTesting {
 	public AddressBookTesting(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
 		diFactory.context(this);
-		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
-		typeResolver = diFactory.create(DollarTypeResolver.class);
+		configuration = diFactory.create(diFactory.actualType(Properties.class), Collections.singletonMap("file", configurationFile));
+		typeResolver = diFactory.create(diFactory.actualType(DollarTypeResolver.class));
 
-		fullstack = diFactory.create(AddressBookFullstack.class,
+		fullstack = diFactory.create(diFactory.actualType(AddressBookFullstack.class),
 				Java.hashMap("diFactory",
 						new DiFactory(Java.getPackageClasses(AddressBookFullstack.class.getPackageName(), true)),
 						"configurationFile", configurationFile));
 
 		{
-			var f = diFactory.create(ApplicationHandlerFactory.class, Map.of("methods", types().stream()
+			var f = diFactory.create(diFactory.actualType(ApplicationHandlerFactory.class), Map.of("methods", types().stream()
 					.flatMap(x -> Arrays.stream(x.getMethods()).filter(y -> !Modifier.isStatic(y.getModifiers()))
 							.map(y -> new Invocable(x, y)))
 					.toList(), "files",

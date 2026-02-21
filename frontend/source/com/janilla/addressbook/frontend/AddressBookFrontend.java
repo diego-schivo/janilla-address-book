@@ -61,17 +61,19 @@ import com.janilla.web.ResourceMap;
 
 public class AddressBookFrontend {
 
+	public static final String[] DI_PACKAGES = { "com.janilla.web", "com.janilla.addressbook.frontend" };
+
 	public static void main(String[] args) {
 		IO.println(ProcessHandle.current().pid());
-		var f = new DiFactory(Stream.of("com.janilla.web", AddressBookFrontend.class.getPackageName())
-				.flatMap(x -> Java.getPackageClasses(x, false).stream()).toList());
+		var f = new DiFactory(
+				Arrays.stream(DI_PACKAGES).flatMap(x -> Java.getPackageClasses(x, false).stream()).toList());
 		serve(f, args.length > 0 ? args[0] : null);
 	}
 
 	protected static void serve(DiFactory diFactory, String configurationPath) {
 		AddressBookFrontend a;
 		{
-			a = diFactory.create(AddressBookFrontend.class,
+			a = diFactory.create(diFactory.actualType(AddressBookFrontend.class),
 					Java.hashMap("diFactory", diFactory, "configurationFile",
 							configurationPath != null ? Path.of(configurationPath.startsWith("~")
 									? System.getProperty("user.home") + configurationPath.substring(1)
@@ -83,7 +85,7 @@ public class AddressBookFrontend {
 		HttpServer s;
 		{
 			var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
-			s = a.diFactory.create(HttpServer.class,
+			s = a.diFactory.create(a.diFactory.actualType(HttpServer.class),
 					Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 		}
 		s.serve();
@@ -91,6 +93,8 @@ public class AddressBookFrontend {
 
 	protected static SSLContext sslContext(Properties configuration) {
 		var p = configuration.getProperty("address-book.server.keystore.path");
+		if (p == null)
+			return HttpClient.sslContext("TLSv1.3");
 		var w = configuration.getProperty("address-book.server.keystore.password");
 		if (p.startsWith("~"))
 			p = System.getProperty("user.home") + p.substring(1);
@@ -121,14 +125,17 @@ public class AddressBookFrontend {
 	protected final ResourceMap resourceMap;
 
 	public AddressBookFrontend(DiFactory diFactory, Path configurationFile) {
+		IO.println("AddressBookFrontend, configurationFile=" + configurationFile);
 		this.diFactory = diFactory;
 		diFactory.context(this);
-		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		configuration = diFactory.create(diFactory.actualType(Properties.class),
+				Collections.singletonMap("file", configurationFile));
 
-		httpClient = diFactory.create(HttpClient.class, Map.of("sslContext", sslContext(configuration)));
-		dataFetching = diFactory.create(DataFetching.class);
+		httpClient = diFactory.create(diFactory.actualType(HttpClient.class),
+				Map.of("sslContext", sslContext(configuration)));
+		dataFetching = diFactory.create(diFactory.actualType(DataFetching.class));
 
-		invocationResolver = diFactory.create(InvocationResolver.class,
+		invocationResolver = diFactory.create(diFactory.actualType(InvocationResolver.class),
 				Map.of("invocables",
 						diFactory.types().stream()
 								.flatMap(x -> Arrays.stream(x.getMethods())
@@ -138,14 +145,15 @@ public class AddressBookFrontend {
 						"instanceResolver", (Function<Class<?>, Object>) x -> {
 							var y = diFactory.context();
 //							IO.println("x=" + x + ", y=" + y);
-							return x.isAssignableFrom(y.getClass()) ? diFactory.context() : diFactory.create(x);
+							return x.isAssignableFrom(y.getClass()) ? diFactory.context()
+									: diFactory.create(diFactory.actualType(x));
 						}));
-		resourceMap = diFactory.create(ResourceMap.class,
+		resourceMap = diFactory.create(diFactory.actualType(ResourceMap.class),
 				Map.of("paths", Map.of("", Stream.of("com.janilla.frontend", AddressBookFrontend.class.getPackageName())
 						.flatMap(x -> Java.getPackagePaths(x, false).filter(Files::isRegularFile)).toList())));
-		renderableFactory = diFactory.create(RenderableFactory.class);
+		renderableFactory = diFactory.create(diFactory.actualType(RenderableFactory.class));
 		{
-			var f = diFactory.create(ApplicationHandlerFactory.class);
+			var f = diFactory.create(diFactory.actualType(ApplicationHandlerFactory.class));
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
 				if (h == null)
@@ -215,7 +223,8 @@ public class AddressBookFrontend {
 
 		@Override
 		public String apply(T value) {
-			return Json.format(diFactory.create(ReflectionJsonIterator.class, Map.of("object", value)));
+			return Json.format(
+					diFactory.create(diFactory.actualType(ReflectionJsonIterator.class), Map.of("object", value)));
 		}
 	}
 }

@@ -41,18 +41,15 @@ import com.janilla.web.NotFoundException;
 @Handle(path = "/api/contacts")
 public class ContactApi {
 
-//	public static final AtomicReference<ContactApi> INSTANCE = new AtomicReference<>();
-
 	protected final Persistence persistence;
 
 	public ContactApi(Persistence persistence) {
-//		if (!INSTANCE.compareAndSet(null, this))
-//			throw new IllegalStateException();
 		this.persistence = persistence;
 	}
 
 	@Handle(method = "GET")
 	public List<Contact> list(@Bind("query") String query) {
+//		IO.println("ContactApi.list, query=" + query);
 		var c = persistence.crud(Contact.class);
 		var q = query != null && !query.isEmpty() ? query.toLowerCase().toCharArray() : null;
 		return c.read(q != null ? c.filter("full", x -> Arrays.stream(((String) x).split(" ")).anyMatch(y -> {

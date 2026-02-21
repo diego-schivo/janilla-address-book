@@ -1,37 +1,37 @@
 <div id="contact">
-	<div>
-		<img src="${avatar}" alt="${full} avatar" loading="lazy" />
-	</div>
+  <div>
+    <img src="${avatar}" alt="${full} avatar" loading="lazy" />
+  </div>
 
-	<div>
-		<h1>
-			<!--${name}-->
-			<template id="name">${full}</template>
-			<template id="no-name">
-				<i>No Name</i>
-			</template>
-			<toggle-favorite data-checked="${favorite}"></toggle-favorite>
-		</h1>
+  <div>
+    <h1>
+      <!--${name}-->
+      <template id="name">${full}</template>
+      <template id="no-name">
+        <i>No Name</i>
+      </template>
+      <toggle-favorite data-checked="${favorite}"></toggle-favorite>
+    </h1>
 
-		<!--${twitter}-->
-		<template id="twitter">
-			<p>
-				<a href="https://twitter.com/${twitter}">${twitter}</a>
-			</p>
-		</template>
+    <!--${twitter}-->
+    <template id="twitter">
+      <p>
+        <a href="https://twitter.com/${twitter}">${twitter}</a>
+      </p>
+    </template>
 
-		<!--${notes}-->
-		<template id="notes">
-			<p>${notes}</p>
-		</template>
+    <!--${notes}-->
+    <template id="notes">
+      <p>${notes}</p>
+    </template>
 
-		<div>
-			<form>
-				<button>Edit</button>
-			</form>
-			<form method="post">
-				<button>Delete</button>
-			</Form>
-		</div>
-	</div>
+    <div>
+      <form>
+        <button>Edit</button>
+      </form>
+      <form method="post">
+        <button>Delete</button>
+      </Form>
+    </div>
+  </div>
 </div>

@@ -30,9 +30,9 @@ import java.time.Instant;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.janilla.backend.persistence.Entity;
-import com.janilla.backend.persistence.Index;
-import com.janilla.backend.persistence.Store;
+import com.janilla.persistence.Entity;
+import com.janilla.persistence.Index;
+import com.janilla.persistence.Store;
 
 @Store
 public record Contact(String id, Instant createdAt, String avatar, String first, String last, String twitter,
@@ -40,7 +40,7 @@ public record Contact(String id, Instant createdAt, String avatar, String first,
 
 	@Index
 	public String full() {
-		var s = Stream.of(first, last).filter(x -> x != null && !x.isEmpty()).collect(Collectors.joining(" "));
+		var s = Stream.of(first, last).filter(x -> x != null && !x.isBlank()).collect(Collectors.joining(" "));
 		return !s.isEmpty() ? s : null;
 	}
 

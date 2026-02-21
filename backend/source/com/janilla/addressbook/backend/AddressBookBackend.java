@@ -41,19 +41,19 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
 
 import com.janilla.backend.persistence.Persistence;
 import com.janilla.backend.persistence.PersistenceBuilder;
-import com.janilla.backend.persistence.Store;
+import com.janilla.http.HttpClient;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
 import com.janilla.ioc.DiFactory;
 import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
 import com.janilla.java.TypeResolver;
+import com.janilla.persistence.Store;
 import com.janilla.web.ApplicationHandlerFactory;
 import com.janilla.web.Invocable;
 import com.janilla.web.InvocationResolver;
@@ -61,17 +61,19 @@ import com.janilla.web.NotFoundException;
 
 public class AddressBookBackend {
 
+	public static final String[] DI_PACKAGES = { "com.janilla.web", "com.janilla.addressbook.backend" };
+
 	public static void main(String[] args) {
 		IO.println(ProcessHandle.current().pid());
-		var f = new DiFactory(Stream.of("com.janilla.web", AddressBookBackend.class.getPackageName())
-				.flatMap(x -> Java.getPackageClasses(x, false).stream()).toList());
+		var f = new DiFactory(
+				Arrays.stream(DI_PACKAGES).flatMap(x -> Java.getPackageClasses(x, false).stream()).toList());
 		serve(f, args.length > 0 ? args[0] : null);
 	}
 
 	protected static void serve(DiFactory diFactory, String configurationPath) {
 		AddressBookBackend a;
 		{
-			a = diFactory.create(AddressBookBackend.class,
+			a = diFactory.create(diFactory.actualType(AddressBookBackend.class),
 					Java.hashMap("diFactory", diFactory, "configurationFile",
 							configurationPath != null ? Path.of(configurationPath.startsWith("~")
 									? System.getProperty("user.home") + configurationPath.substring(1)
@@ -81,23 +83,26 @@ public class AddressBookBackend {
 		SSLContext c;
 		{
 			var p = a.configuration.getProperty("address-book.server.keystore.path");
-			var w = a.configuration.getProperty("address-book.server.keystore.password");
-			if (p.startsWith("~"))
-				p = System.getProperty("user.home") + p.substring(1);
-			var f = Path.of(p);
-			if (!Files.exists(f))
-				Java.generateKeyPair(f, w);
-			try (var s = Files.newInputStream(f)) {
-				c = Java.sslContext(s, w.toCharArray());
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
+			if (p != null) {
+				var w = a.configuration.getProperty("address-book.server.keystore.password");
+				if (p.startsWith("~"))
+					p = System.getProperty("user.home") + p.substring(1);
+				var f = Path.of(p);
+				if (!Files.exists(f))
+					Java.generateKeyPair(f, w);
+				try (var s = Files.newInputStream(f)) {
+					c = Java.sslContext(s, w.toCharArray());
+				} catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
+			} else
+				c = HttpClient.sslContext("TLSv1.3");
 		}
 
 		HttpServer s;
 		{
 			var p = Integer.parseInt(a.configuration.getProperty("address-book.server.port"));
-			s = a.diFactory.create(HttpServer.class,
+			s = a.diFactory.create(a.diFactory.actualType(HttpServer.class),
 					Map.of("sslContext", c, "endpoint", new InetSocketAddress(p), "handler", a.handler));
 		}
 		s.serve();
@@ -122,25 +127,27 @@ public class AddressBookBackend {
 	public AddressBookBackend(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
 		diFactory.context(this);
-		configuration = diFactory.create(Properties.class, Collections.singletonMap("file", configurationFile));
+		configuration = diFactory.create(diFactory.actualType(Properties.class),
+				Collections.singletonMap("file", configurationFile));
 
 		{
 			Map<String, Class<?>> m = diFactory.types().stream()
 					.collect(Collectors.toMap(x -> x.getSimpleName(), x -> x, (_, x) -> x, LinkedHashMap::new));
 			resolvables = m.values().stream().toList();
 		}
-		typeResolver = diFactory.create(DollarTypeResolver.class);
+		typeResolver = diFactory.create(diFactory.actualType(DollarTypeResolver.class));
 
 		storables = resolvables.stream().filter(x -> x.isAnnotationPresent(Store.class)).toList();
 		{
 			var f = configuration.getProperty("address-book.database.file");
 			if (f.startsWith("~"))
 				f = System.getProperty("user.home") + f.substring(1);
-			var b = diFactory.create(PersistenceBuilder.class, Map.of("databaseFile", Path.of(f)));
+			var b = diFactory.create(diFactory.actualType(PersistenceBuilder.class),
+					Map.of("databaseFile", Path.of(f)));
 			persistence = b.build(diFactory);
 		}
 
-		invocationResolver = diFactory.create(InvocationResolver.class,
+		invocationResolver = diFactory.create(diFactory.actualType(InvocationResolver.class),
 				Map.of("invocables",
 						diFactory.types().stream()
 								.flatMap(x -> Arrays.stream(x.getMethods())
@@ -151,11 +158,11 @@ public class AddressBookBackend {
 							var y = diFactory.context();
 //							IO.println("x=" + x + ", y=" + y);
 							return x.isAssignableFrom(y.getClass()) ? diFactory.context()
-									: diFactory.create(x,
+									: diFactory.create(diFactory.actualType(x),
 											Map.of("invocationResolver", InvocationResolver.INSTANCE.get()));
 						}));
 		{
-			var f = diFactory.create(ApplicationHandlerFactory.class);
+			var f = diFactory.create(diFactory.actualType(ApplicationHandlerFactory.class));
 			handler = x -> {
 				var h = f.createHandler(Objects.requireNonNullElse(x.exception(), x.request()));
 				if (h == null)
