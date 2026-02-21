@@ -2,6 +2,10 @@
 
 This is a porting of [React Router Address Book Tutorial](https://github.com/remix-run/react-router/tree/main/tutorials/address-book).
 
+### View a live demo
+
+Open a browser and navigate to <https://addressbook.janilla.com/>.
+
 ### How you can get started
 
 > **_Note:_**  if you are unfamiliar with the terminal, you can set up the project in an IDE (section below).
