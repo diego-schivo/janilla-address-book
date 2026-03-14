@@ -24,117 +24,120 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import WebComponent from "./web-component.js";
+import WebComponent from "base/web-component";
 
 export default class ContactPage extends WebComponent {
 
-	static get observedAttributes() {
-		return ["data-id", "data-loading", "slot"];
-	}
+    static get moduleUrl() {
+        return import.meta.url;
+    }
 
-	static get templateNames() {
-		return ["contact"];
-	}
+    static get templateNames() {
+        return ["contact"];
+    }
 
-	constructor() {
-		super();
-	}
+    static get observedAttributes() {
+        return ["data-id", "data-loading", "slot"];
+    }
 
-	connectedCallback() {
-		super.connectedCallback();
-		this.addEventListener("submit", this.handleSubmit);
-		this.addEventListener("toggle-favorite", this.handleToggleFavorite);
-	}
+    connectedCallback() {
+        super.connectedCallback();
 
-	disconnectedCallback() {
-		super.disconnectedCallback();
-		this.removeEventListener("submit", this.handleSubmit);
-		this.removeEventListener("toggle-favorite", this.handleToggleFavorite);
-	}
+        this.addEventListener("submit", this.handleSubmit);
+    }
 
-	async updateDisplay() {
-		const s = this.customState;
-		if (this.slot) {
-			const a = this.closest("app-element");
-			const ps = a.popState;
-			if (ps)
-				s.contact = ps.contact;
+    disconnectedCallback() {
+        this.removeEventListener("submit", this.handleSubmit);
 
-			const hs = history.state;
-			this.appendChild(this.interpolateDom(hs.contact ? {
-				$template: "",
-				...hs.contact,
-				name: {
-					$template: hs.contact.full ? "name" : "no-name",
-					...hs.contact
-				},
-				twitter: hs.contact.twitter ? {
-					$template: "twitter",
-					...hs.contact
-				} : null,
-				notes: hs.contact.notes ? {
-					$template: "notes",
-					...hs.contact
-				} : null
-			} : { $template: "" }));
+        super.disconnectedCallback();
+    }
 
-			if (!s.contact || this.dataset.id != hs.contact?.id) {
-				s.contact = await (await fetch(`${a.dataset.apiUrl}/contacts/${this.dataset.id}`)).json();
-				history.replaceState({
-					...history.state,
-					contact: s.contact
-				}, "");
-				dispatchEvent(new CustomEvent("popstate"));
-			}
-		} else
-			delete s.contact;
-	}
+    async updateDisplay() {
+        if (this.slot) {
+            let hs = history.state;
+            const a = this.closest("app-element");
 
-	handleSubmit = async event => {
-		event.preventDefault();
-		event.stopPropagation();
-		const s = this.customState;
-		switch (event.target.method) {
-			case "get":
-				const u = new URL(`/contacts/${s.contact.id}/edit`, location.href);
-				const q = new URLSearchParams(location.search).get("q");
-				if (q)
-					u.searchParams.append("q", q);
-				history.pushState(history.state, "", u.pathname + u.search);
-				dispatchEvent(new CustomEvent("popstate"));
-				break;
-			case "post":
-				if (confirm("Please confirm you want to delete this record.")) {
-					const a = this.closest("app-element");
-					const r = await fetch(`${a.dataset.apiUrl}/contacts/${s.contact.id}`, { method: "DELETE" });
-					if (r.ok) {
-						delete s.contact;
-						delete this.closest("sidebar-layout").customState.contacts;
-						history.pushState(history.state, "", "/");
-						dispatchEvent(new CustomEvent("popstate"));
-					} else
-						alert(await r.text());
-				}
-				break;
-		}
-	}
+            if (!Object.hasOwn(hs, "contact"))
+                history.replaceState(hs = {
+                    ...hs,
+                    contact: a.serverState.contact
+                }, "");
 
-	handleToggleFavorite = async event => {
-		const s = this.customState;
-		s.contact.favorite = event.detail.favorite;
-		this.requestDisplay();
-		const a = this.closest("app-element");
-		const r = await fetch(`${a.dataset.apiUrl}/contacts/${s.contact.id}/favorite`, {
-			method: "PUT",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify(s.contact.favorite)
-		});
-		if (r.ok) {
-			s.contact = await r.json();
-			delete this.closest("sidebar-layout").customState.contacts;
-			history.pushState(history.state, "", "/");
-			dispatchEvent(new CustomEvent("popstate"));
-		} else
-			alert(await r.text());
-	}
+            this.appendChild(this.interpolateDom({
+                $template: "",
+                ...hs.contact,
+                name: hs.contact ? {
+                    $template: hs.contact.full ? "name" : "no-name",
+                    ...hs.contact
+                } : null,
+                twitter: hs.contact?.twitter ? {
+                    $template: "twitter",
+                    ...hs.contact
+                } : null,
+                notes: hs.contact?.notes ? {
+                    $template: "notes",
+                    ...hs.contact
+                } : null
+            }));
+
+            if (!hs.contact || this.dataset.id != hs.contact.id) {
+                const c = await (await fetch(`${a.dataset.apiUrl}/contacts/${this.dataset.id}`)).json();
+
+                history.replaceState({
+                    ...history.state,
+                    contact: c
+                }, "");
+
+                a.navigate();
+            }
+        } else
+            history.replaceState(Object.fromEntries(Object.entries(history.state)
+                .filter(([k, _]) => k !== "contact")), "");
+    }
+
+    handleSubmit = async event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const hs = history.state;
+        const a = this.closest("app-element");
+
+        switch (event.target.method) {
+            case "get":
+                const u = new URL(`/contacts/${hs.contact.id}/edit`, location.href);
+                const q = new URLSearchParams(location.search).get("q");
+                if (q)
+                    u.searchParams.append("q", q);
+                a.navigate(u);
+                break;
+
+            case "post":
+                if (confirm("Please confirm you want to delete this record.")) {
+                    const r = await fetch(`${a.dataset.apiUrl}/contacts/${hs.contact.id}`, { method: "DELETE" });
+                    if (r.ok)
+                        a.navigate(new URL("/", location.href));
+                    else
+                        alert(await r.text());
+                }
+                break;
+        }
+    }
+
+    async toggleFavorite(favorite) {
+        const hs = history.state;
+        const a = this.closest("app-element");
+
+        hs.contact.favorite = favorite;
+        this.requestDisplay();
+
+        const r = await fetch(`${a.dataset.apiUrl}/contacts/${hs.contact.id}/favorite`, {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(hs.contact.favorite)
+        });
+        if (r.ok)
+            a.navigate(new URL("/", location.href));
+        else
+            alert(await r.text());
+    }
 }

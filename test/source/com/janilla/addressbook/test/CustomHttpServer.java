@@ -1,10 +1,8 @@
 /*
  * MIT License
  *
- * Copyright (c) React Training LLC 2015-2019
- * Copyright (c) Remix Software Inc. 2020-2021
- * Copyright (c) Shopify Inc. 2022-2023
- * Copyright (c) Diego Schivo 2024-2026
+ * Copyright (c) 2024 Vercel, Inc.
+ * Copyright (c) 2024-2026 Diego Schivo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,19 +22,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.fullstack;
+package com.janilla.addressbook.test;
 
+import java.net.SocketAddress;
 import java.util.Map;
 
-import com.janilla.http.DirectHttpClient;
+import javax.net.ssl.SSLContext;
+
+import com.janilla.addressbook.fullstack.AddressBookFullstack;
+import com.janilla.http.HttpExchange;
+import com.janilla.http.HttpHandler;
+import com.janilla.http.HttpRequest;
+import com.janilla.http.HttpResponse;
 import com.janilla.http.HttpServer;
-import com.janilla.ioc.Context;
 
-@Context("frontend")
-public class CustomHttpClient extends DirectHttpClient {
+public class CustomHttpServer extends HttpServer {
 
-	public CustomHttpClient() {
-		var b = AddressBookFullstack.INSTANCE.get().backend();
-		super(b.diFactory().newInstance(HttpServer.class, Map.of("handler", b.handler())));
+	protected final AddressBookFullstack fullstack;
+
+	public CustomHttpServer(SSLContext sslContext, SocketAddress endpoint, HttpHandler handler,
+			AddressBookFullstack fullstack) {
+		super(sslContext, endpoint, handler);
+		this.fullstack = fullstack;
+	}
+
+	@Override
+	protected HttpExchange createExchange(HttpRequest request, HttpResponse response) {
+		if (Test.ONGOING.get()) {
+			var f = request.getPath().startsWith("/api/") ? fullstack.backend().diFactory()
+					: fullstack.frontend().diFactory();
+			return f.newInstance(f.classFor(HttpExchange.class), Map.of("request", request, "response", response));
+		}
+		return super.createExchange(request, response);
 	}
 }

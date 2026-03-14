@@ -24,51 +24,56 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.fullstack;
+package com.janilla.addressbook.test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.net.ssl.SSLContext;
 
-import com.janilla.addressbook.backend.AddressBookBackend;
-import com.janilla.addressbook.backend.BackendExchange;
-import com.janilla.addressbook.frontend.AddressBookFrontend;
+import com.janilla.addressbook.fullstack.AddressBookFullstack;
 import com.janilla.http.HttpClient;
 import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
 import com.janilla.ioc.DefaultDiFactory;
 import com.janilla.ioc.DiFactory;
 import com.janilla.java.Java;
+import com.janilla.web.ApplicationHandlerFactory;
+import com.janilla.web.Handle;
+import com.janilla.web.Invocable;
+import com.janilla.web.InvocationResolver;
+import com.janilla.web.NotFoundException;
+import com.janilla.web.Render;
+import com.janilla.web.RenderableFactory;
+import com.janilla.web.ResourceMap;
 
-public class AddressBookFullstack {
+@Render(template = "index", resource = "/index.html")
+public class AddressBookTest {
 
-	public static final String[] DI_PACKAGES = { "com.janilla.web", "com.janilla.addressbook.fullstack" };
-
-	public static final ScopedValue<AddressBookFullstack> INSTANCE = ScopedValue.newInstance();
+	public static final String[] DI_PACKAGES = { "com.janilla.web", "com.janilla.addressbook.test" };
 
 	public static void main(String[] args) {
 		IO.println(ProcessHandle.current().pid());
 		var f = new DefaultDiFactory(
-				Arrays.stream(DI_PACKAGES).flatMap(x -> Java.getPackageClasses(x, false).stream()).toList(),
-				"fullstack");
+				Arrays.stream(DI_PACKAGES).flatMap(x -> Java.getPackageClasses(x, false).stream()).toList());
 		serve(f, args.length > 0 ? args[0] : null);
 	}
 
 	protected static void serve(DiFactory diFactory, String configurationPath) {
-		AddressBookFullstack a;
+		AddressBookTest a;
 		{
-			a = diFactory.newInstance(diFactory.classFor(AddressBookFullstack.class),
+			a = diFactory.newInstance(diFactory.classFor(AddressBookTest.class),
 					Java.hashMap("diFactory", diFactory, "configurationFile",
 							configurationPath != null ? Path.of(configurationPath.startsWith("~")
 									? System.getProperty("user.home") + configurationPath.substring(1)
@@ -103,58 +108,69 @@ public class AddressBookFullstack {
 		s.serve();
 	}
 
-	protected AddressBookBackend backend;
-
 	protected final Properties configuration;
 
 	protected final DiFactory diFactory;
 
-	protected AddressBookFrontend frontend;
+	protected final AddressBookFullstack fullstack;
 
 	protected final HttpHandler handler;
 
-	public AddressBookFullstack(DiFactory diFactory, Path configurationFile) {
+	protected final InvocationResolver invocationResolver;
+
+	protected final RenderableFactory renderableFactory;
+
+	protected final ResourceMap resourceMap;
+
+	public AddressBookTest(DiFactory diFactory, Path configurationFile) {
 		this.diFactory = diFactory;
 		diFactory.context(this);
 		configuration = diFactory.newInstance(diFactory.classFor(Properties.class),
 				Collections.singletonMap("file", configurationFile));
 
-		handler = x -> {
-			var h = x instanceof BackendExchange ? backend.handler() : frontend.handler();
-			return h.handle(x);
-		};
+		{
+			var f = new DefaultDiFactory(Arrays.stream(AddressBookFullstack.DI_PACKAGES)
+					.flatMap(x -> Java.getPackageClasses(x, false).stream()).toList(), "fullstack");
+			fullstack = diFactory.newInstance(diFactory.classFor(AddressBookFullstack.class),
+					Java.hashMap("diFactory", f, "configurationFile", configurationFile));
+		}
 
-		var cf = Optional.ofNullable(configurationFile).orElseGet(() -> {
-			try {
-				return Path.of(AddressBookFullstack.class.getResource("configuration.properties").toURI());
-			} catch (URISyntaxException e) {
-				throw new RuntimeException(e);
-			}
-		});
-		backend = ScopedValue.where(INSTANCE, this)
-				.call(() -> diFactory.newInstance(diFactory.classFor(AddressBookBackend.class),
-						Java.hashMap("diFactory",
-								new DefaultDiFactory(Stream
-										.concat(Stream.of("com.janilla.web"),
-												Stream.of("backend", "fullstack")
-														.map(x -> AddressBookBackend.class.getPackageName()
-																.replace(".backend", "." + x)))
-										.flatMap(x -> Java.getPackageClasses(x, false).stream()).toList(), "backend"),
-								"configurationFile", cf)));
-		frontend = ScopedValue.where(INSTANCE, this)
-				.call(() -> diFactory.newInstance(diFactory.classFor(AddressBookFrontend.class),
-						Java.hashMap("diFactory",
-								new DefaultDiFactory(Stream
-										.concat(Stream.of("com.janilla.web"),
-												Stream.of("frontend", "fullstack")
-														.map(x -> AddressBookFrontend.class.getPackageName()
-																.replace(".frontend", "." + x)))
-										.flatMap(x -> Java.getPackageClasses(x, false).stream()).toList(), "frontend"),
-								"configurationFile", cf)));
+		invocationResolver = diFactory.newInstance(diFactory.classFor(InvocationResolver.class),
+				Map.of("invocables",
+						diFactory.types().stream()
+								.flatMap(x -> Arrays.stream(x.getMethods())
+										.filter(y -> !Modifier.isStatic(y.getModifiers()) && !y.isBridge())
+										.map(y -> new Invocable(x, y)))
+								.toList(),
+						"instanceResolver", (Function<Class<?>, Object>) x -> {
+							var y = diFactory.context();
+//							IO.println("x=" + x + ", y=" + y);
+							return x.isAssignableFrom(y.getClass()) ? diFactory.context()
+									: diFactory.newInstance(diFactory.classFor(x));
+						}));
+		resourceMap = diFactory.newInstance(diFactory.classFor(ResourceMap.class),
+				Map.of("paths", Map.of("", Stream.of("com.janilla.frontend", "com.janilla.addressbook.test")
+						.flatMap(x -> Java.getPackagePaths(x, false).filter(Files::isRegularFile)).toList())));
+		renderableFactory = diFactory.newInstance(diFactory.classFor(RenderableFactory.class));
+		{
+			var f = diFactory.newInstance(diFactory.classFor(ApplicationHandlerFactory.class));
+			handler = ex -> {
+//				IO.println("AddressBookTest, " + ex.request().getPath() + ", Test.ONGOING=" + Test.ONGOING.get());
+				var h2 = Test.ONGOING.get() && !ex.request().getPath().startsWith("/test/") ? fullstack.handler()
+						: (HttpHandler) y -> {
+							var h = f.createHandler(Objects.requireNonNullElse(y.exception(), y.request()));
+							if (h == null)
+								throw new NotFoundException(y.request().getMethod() + " " + y.request().getTarget());
+							return h.handle(y);
+						};
+				return h2.handle(ex);
+			};
+		}
 	}
 
-	public AddressBookBackend backend() {
-		return backend;
+	@Handle(method = "GET", path = "/")
+	public AddressBookTest application() {
+		return this;
 	}
 
 	public Properties configuration() {
@@ -165,11 +181,23 @@ public class AddressBookFullstack {
 		return diFactory;
 	}
 
-	public AddressBookFrontend frontend() {
-		return frontend;
+	public AddressBookFullstack fullstack() {
+		return fullstack;
 	}
 
 	public HttpHandler handler() {
 		return handler;
+	}
+
+	public InvocationResolver invocationResolver() {
+		return invocationResolver;
+	}
+
+	public RenderableFactory renderableFactory() {
+		return renderableFactory;
+	}
+
+	public ResourceMap resourceMap() {
+		return resourceMap;
 	}
 }

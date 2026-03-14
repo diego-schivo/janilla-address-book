@@ -48,7 +48,7 @@ public class CustomPersistenceBuilder extends PersistenceBuilder {
 		var x = super.build(diFactory);
 		if (!e) {
 			var d = SeedData.read();
-			IO.println("CustomPersistenceBuilder.build, d=" + d);
+//			IO.println("CustomPersistenceBuilder.build, d=" + d);
 			for (var c : d.contacts()) {
 				c = c.withId(Stream.of(c.first(), c.last()).map(y -> y.toLowerCase().replace(' ', '_'))
 						.collect(Collectors.joining("-"))).withCreatedAt(Instant.now());

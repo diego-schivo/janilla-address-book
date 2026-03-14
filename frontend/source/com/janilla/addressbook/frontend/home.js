@@ -24,24 +24,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import WebComponent from "./web-component.js";
+import WebComponent from "base/web-component";
 
 export default class Home extends WebComponent {
 
-	static get observedAttributes() {
-		return ["slot"];
-	}
+    static get moduleUrl() {
+        return import.meta.url;
+    }
 
-	static get templateNames() {
-		return ["home"];
-	}
+    static get templateNames() {
+        return ["home"];
+    }
 
-	constructor() {
-		super();
-	}
+    static get observedAttributes() {
+        return ["slot"];
+    }
 
-	async updateDisplay() {
-		if (this.slot)
-			await super.updateDisplay();
-	}
+    async updateDisplay() {
+        if (this.slot)
+            await super.updateDisplay();
+    }
 }

@@ -24,86 +24,89 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import WebComponent from "./web-component.js";
+import WebComponent from "base/web-component";
 
 export default class EditContact extends WebComponent {
 
-	static get observedAttributes() {
-		return ["data-id", "data-loading", "slot"];
-	}
+    static get moduleUrl() {
+        return import.meta.url;
+    }
 
-	static get templateNames() {
-		return ["edit-contact"];
-	}
+    static get templateNames() {
+        return ["edit-contact"];
+    }
 
-	constructor() {
-		super();
-	}
+    static get observedAttributes() {
+        return ["data-id", "data-loading", "slot"];
+    }
 
-	connectedCallback() {
-		super.connectedCallback();
-		this.addEventListener("submit", this.handleSubmit);
-		this.addEventListener("click", this.handleClick);
-	}
+    connectedCallback() {
+        super.connectedCallback();
 
-	disconnectedCallback() {
-		super.disconnectedCallback();
-		this.removeEventListener("submit", this.handleSubmit);
-		this.removeEventListener("click", this.handleClick);
-	}
+        this.addEventListener("submit", this.handleSubmit);
+        this.addEventListener("click", this.handleClick);
+    }
 
-	async updateDisplay() {
-		const s = this.customState;
-		if (this.slot) {
-			const a = this.closest("app-element");
-			const ps = a.popState;
-			if (ps)
-				s.contact = ps.contact;
+    disconnectedCallback() {
+        this.removeEventListener("submit", this.handleSubmit);
+        this.removeEventListener("click", this.handleClick);
 
-			const hs = history.state;
-			this.appendChild(this.interpolateDom({
-				$template: "",
-				...hs.contact
-			}));
+        super.disconnectedCallback();
+    }
 
-			if (!s.contact || this.dataset.id != hs.contact?.id) {
-				s.contact = await (await fetch(`${a.dataset.apiUrl}/contacts/${this.dataset.id}`)).json();
-				history.replaceState({
-					...history.state,
-					contact: s.contact
-				}, "");
-				dispatchEvent(new CustomEvent("popstate"));
-			}
-		} else
-			delete s.contact;
-	}
+    async updateDisplay() {
+        if (this.slot) {
+            let hs = history.state;
+            const a = this.closest("app-element");
 
-	handleSubmit = async event => {
-		event.preventDefault();
-		event.stopPropagation();
-		const a = this.closest("app-element");
-		const s = this.customState;
-		const r = await fetch(`${a.dataset.apiUrl}/contacts/${s.contact.id}`, {
-			method: "PUT",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
-		});
-		if (r.ok) {
-			s.contact = await r.json();
-			delete this.closest("sidebar-layout").customState.contacts;
-			history.pushState({
-				...history.state,
-				contact: s.contact
-			}, "", `/contacts/${s.contact.id}`);
-			dispatchEvent(new CustomEvent("popstate"));
-		} else
-			alert(await r.text());
-	}
+            if (!Object.hasOwn(hs, "contact"))
+                history.replaceState(hs = {
+                    ...hs,
+                    contact: a.serverState.contact
+                }, "");
 
-	handleClick = event => {
-		if (event.target.matches('[type="button"]')) {
-			event.stopPropagation();
-			history.back();
-		}
-	}
+            this.appendChild(this.interpolateDom({
+                $template: "",
+                ...hs.contact
+            }));
+
+            if (!hs.contact || this.dataset.id != hs.contact.id) {
+                const c = await (await fetch(`${a.dataset.apiUrl}/contacts/${this.dataset.id}`)).json();
+
+                history.replaceState({
+                    ...history.state,
+                    contact: c
+                }, "");
+
+                a.navigate();
+            }
+        } else
+            history.replaceState(Object.fromEntries(Object.entries(history.state)
+                .filter(([k, _]) => k !== "contact")), "");
+    }
+
+    handleClick = event => {
+        if (event.target.matches('[type="button"]')) {
+            event.stopPropagation();
+            history.back();
+        }
+    }
+
+    handleSubmit = async event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const hs = history.state;
+        const a = this.closest("app-element");
+
+        const r = await fetch(`${a.dataset.apiUrl}/contacts/${hs.contact.id}`, {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(Object.fromEntries(new FormData(event.target)))
+        });
+        if (r.ok)
+            a.navigate(new URL(`/contacts/${hs.contact.id}`, location.href));
+        else
+            alert(await r.text());
+    }
 }

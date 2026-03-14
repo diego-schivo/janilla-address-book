@@ -24,29 +24,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.janilla.addressbook.testing;
+module com.janilla.addressbook.test {
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Properties;
+	exports com.janilla.addressbook.test;
 
-public class CustomProperties extends Properties {
+	opens com.janilla.addressbook.test;
 
-	private static final long serialVersionUID = -2294199037395154052L;
-
-	public CustomProperties(Path file) {
-		try {
-			try (var x = AddressBookTesting.class.getResourceAsStream("configuration.properties")) {
-				load(x);
-			}
-			if (file != null)
-				try (var x = Files.newInputStream(file)) {
-					load(x);
-				}
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
+	requires transitive com.janilla.addressbook.fullstack;
 }

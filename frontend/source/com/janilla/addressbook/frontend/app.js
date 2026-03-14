@@ -24,89 +24,66 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import WebComponent from "./web-component.js";
+import BaseApp from "base/app";
 
-export default class App extends WebComponent {
+export default class App extends BaseApp {
 
-	static get templateNames() {
-		return ["app"];
-	}
+    static get moduleUrl() {
+        return import.meta.url;
+    }
 
-	constructor() {
-		super();
-		this.attachShadow({ mode: "open" });
-	}
+    static get templateNames() {
+        return ["app"];
+    }
 
-	connectedCallback() {
-		const el = this.children.length === 1 ? this.firstElementChild : null;
-		if (el?.matches('[type="application/json"]')) {
-			this.popState = JSON.parse(el.text);
-			history.replaceState(this.popState, "");
-			el.remove();
-		}
-		super.connectedCallback();
-		this.addEventListener("click", this.handleClick);
-		addEventListener("popstate", this.handlePopState);
-	}
+    constructor() {
+        super();
 
-	disconnectedCallback() {
-		super.disconnectedCallback();
-		this.removeEventListener("click", this.handleClick);
-		removeEventListener("popstate", this.handlePopState);
-	}
+        this.attachShadow({ mode: "open" });
+    }
 
-	async updateDisplay() {
-		const hs = history.state;
-		const o = {
-			$template: "",
-			sidebar: (() => {
-				const h = location.pathname === "/";
-				const c = location.pathname.match(/\/contacts\/([^/]+)(\/edit)?/);
-				const sl = (h || c) ? this.querySelector("sidebar-layout") : null;
-				const ce = c && !c[2] ? this.querySelector("contact-element") : null;
-				const ec = c && c[2] ? this.querySelector("edit-contact") : null;
-				return {
-					$template: "sidebar",
-					slot: (h || c) ? (hs?.contacts ? "content" : "new-content") : null,
-					href: location.pathname + location.search,
-					loading: (h || c) && !(sl?.customState ?? hs)?.contacts,
-					pending: c && c[1] != ((ce ?? ec)?.customState?.contact ?? hs?.contact)?.id
-				};
-			})(),
-			about: {
-				$template: "about",
-				slot: location.pathname === "/about" ? "content" : null
-			}
-		};
-		o.loading = {
-			$template: "loading",
-			slot: ["sidebar", "about"].every(x => o[x].slot !== "content") ? "content" : null
-		};
-		const df = this.interpolateDom(o);
-		this.shadowRoot.append(...df.querySelectorAll("link, slot"));
-		this.appendChild(df);
-	}
+    connectedCallback() {
+        super.connectedCallback();
 
-	handleClick = event => {
-		const a = event.composedPath().find(x => x instanceof Element && x.matches("a"));
-		if (a?.href) {
-			event.preventDefault();
-			const u = new URL(a.href);
-			const hs = history.state ?? {};
-			const h = location.pathname === "/";
-			const c = location.pathname.match(/\/contacts\/([^/]+)(\/edit)?/);
-			if (!c) {
-				delete hs.contact;
-				if (!h)
-					delete hs.contacts;
-			}
-			history.pushState(hs, "", u.pathname + u.search);
-			dispatchEvent(new CustomEvent("popstate"));
-		}
-	}
+        this.addEventListener("click", this.handleClick);
+    }
 
-	handlePopState = event => {
-		this.popState = event.customState;
-		this.requestDisplay();
-	}
+    disconnectedCallback() {
+        this.removeEventListener("click", this.handleClick);
+
+        super.disconnectedCallback();
+    }
+
+    async updateDisplaySite() {
+        const hs = history.state;
+        const ss = this.serverState;
+
+        const p = location.pathname;
+        const o = {
+            $template: "",
+            sidebar: (() => {
+                const h = p === "/";
+                const c = p.match(/\/contacts\/([^/]+)(\/edit)?/);
+                return {
+                    $template: "sidebar",
+                    slot: (h || c) ? (hs.contacts || ss.contacts ? "content" : "new-content") : null,
+                    href: p + location.search,
+                    loading: (h || c) && !(hs.contacts || ss.contacts),
+                    pending: c && c[1] != (hs.contact ?? ss.contact)?.id
+                };
+            })(),
+            about: {
+                $template: "about",
+                slot: p === "/about" ? "content" : null
+            }
+        };
+        o.loading = {
+            $template: "loading",
+            slot: ["sidebar", "about"].every(x => o[x].slot !== "content") ? "content" : null
+        };
+
+        const df = this.interpolateDom(o);
+        this.shadowRoot.append(...df.querySelectorAll("link, slot"));
+        this.appendChild(df);
+    }
 }

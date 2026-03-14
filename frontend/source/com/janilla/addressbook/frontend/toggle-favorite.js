@@ -24,49 +24,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import WebComponent from "./web-component.js";
+import WebComponent from "base/web-component";
 
 export default class ToggleFavorite extends WebComponent {
 
-	static get observedAttributes() {
-		return ["data-checked"];
-	}
+    static get moduleUrl() {
+        return import.meta.url;
+    }
 
-	static get templateNames() {
-		return ["toggle-favorite"];
-	}
+    static get templateNames() {
+        return ["toggle-favorite"];
+    }
 
-	constructor() {
-		super();
-	}
+    static get observedAttributes() {
+        return ["data-checked"];
+    }
 
-	connectedCallback() {
-		super.connectedCallback();
-		this.addEventListener("submit", this.handleSubmit);
-	}
+    connectedCallback() {
+        super.connectedCallback();
 
-	disconnectedCallback() {
-		super.disconnectedCallback();
-		this.removeEventListener("submit", this.handleSubmit);
-	}
+        this.addEventListener("submit", this.handleSubmit);
+    }
 
-	async updateDisplay() {
-		const c = this.dataset.checked !== undefined;
-		this.appendChild(this.interpolateDom({
-			$template: "",
-			label: c ? "Remove from favorites" : "Add to favorites",
-			value: (!c).toString(),
-			text: c ? "★" : "☆"
-		}));
-	}
+    disconnectedCallback() {
+        this.removeEventListener("submit", this.handleSubmit);
 
-	handleSubmit = event => {
-		event.preventDefault();
-		event.stopPropagation();
-		const c = this.dataset.checked !== undefined;
-		this.dispatchEvent(new CustomEvent("toggle-favorite", {
-			bubbles: true,
-			detail: { favorite: !c }
-		}));
-	}
+        super.disconnectedCallback();
+    }
+
+    async updateDisplay() {
+        const f = this.dataset.checked !== undefined;
+        this.appendChild(this.interpolateDom({
+            $template: "",
+            label: f ? "Remove from favorites" : "Add to favorites",
+            value: (!f).toString(),
+            text: f ? "★" : "☆"
+        }));
+    }
+
+    handleSubmit = event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.closest("contact-element").toggleFavorite(this.dataset.checked === undefined);
+    }
 }

@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.janilla.backend.persistence.Persistence;
-import com.janilla.java.Reflection;
+import com.janilla.java.JavaReflect;
 import com.janilla.web.Bind;
 import com.janilla.web.Handle;
 import com.janilla.web.NotFoundException;
@@ -85,7 +85,7 @@ public class ContactApi {
 	@Handle(method = "PUT", path = "([^/]+)")
 	public Contact update(String id, Contact contact) {
 		var x = persistence.crud(Contact.class).update(id,
-				y -> Reflection.copy(contact, y, z -> !Set.of("id", "createdAt").contains(z)));
+				y -> JavaReflect.copy(contact, y, z -> !Set.of("id", "createdAt").contains(z)));
 		if (x == null)
 			throw new NotFoundException("contact " + id);
 		return x;

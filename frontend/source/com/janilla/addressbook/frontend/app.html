@@ -4,6 +4,10 @@
 <!--${sidebar}-->
 <!--${about}-->
 
+<template id="about">
+  <about-element slot="${slot}"></about-element>
+</template>
+
 <template id="loading">
   <div id="loading-splash" slot="${slot}">
     <div id="loading-splash-spinner"></div>
@@ -16,8 +20,4 @@
     data-href="${href}"
     data-loading="${loading}"
     data-pending="${pending}"></sidebar-layout>
-</template>
-
-<template id="about">
-  <about-element slot="${slot}"></about-element>
 </template>

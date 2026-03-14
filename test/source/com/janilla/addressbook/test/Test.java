@@ -24,11 +24,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-module com.janilla.addressbook.test {
+package com.janilla.addressbook.test;
 
-	exports com.janilla.addressbook.testing;
+import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-	opens com.janilla.addressbook.testing;
+import com.janilla.addressbook.fullstack.AddressBookFullstack;
+import com.janilla.web.Handle;
 
-	requires transitive com.janilla.addressbook.fullstack;
+@Handle(path = "/test")
+public class Test {
+
+	protected static final AtomicBoolean ONGOING = new AtomicBoolean();
+
+	protected final AddressBookFullstack fullstack;
+
+	public Test(AddressBookFullstack fullstack) {
+		this.fullstack = fullstack;
+	}
+
+	@Handle(method = "POST", path = "start")
+	public void start() throws IOException {
+//		IO.println("Test.start, this=" + this);
+		if (ONGOING.getAndSet(true))
+			throw new IllegalStateException();
+
+		var d = fullstack.backend().persistence().database();
+		var ch1 = (FileChannel) d.channel().channel();
+		try (var ch2 = Channels.newChannel(getClass().getResourceAsStream("address-book-test.db"))) {
+			var s = ch1.transferFrom(ch2, 0, Long.MAX_VALUE);
+			ch1.truncate(s);
+		}
+		d.pageCache().clear();
+	}
+
+	@Handle(method = "POST", path = "stop")
+	public void stop() {
+//		IO.println("Test.stop, this=" + this);
+		if (!ONGOING.getAndSet(false))
+			throw new IllegalStateException();
+	}
 }
