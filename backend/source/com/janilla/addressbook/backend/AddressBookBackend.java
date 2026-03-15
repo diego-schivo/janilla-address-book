@@ -51,6 +51,7 @@ import com.janilla.http.HttpHandler;
 import com.janilla.http.HttpServer;
 import com.janilla.ioc.DefaultDiFactory;
 import com.janilla.ioc.DiFactory;
+import com.janilla.java.Converter;
 import com.janilla.java.DollarTypeResolver;
 import com.janilla.java.Java;
 import com.janilla.java.TypeResolver;
@@ -111,6 +112,8 @@ public class AddressBookBackend {
 
 	protected final Properties configuration;
 
+	protected final Converter converter;
+
 	protected final DiFactory diFactory;
 
 	protected final HttpHandler handler;
@@ -137,6 +140,7 @@ public class AddressBookBackend {
 			resolvables = m.values().stream().toList();
 		}
 		typeResolver = diFactory.newInstance(diFactory.classFor(DollarTypeResolver.class));
+		converter = diFactory.newInstance(diFactory.classFor(Converter.class));
 
 		storables = resolvables.stream().filter(x -> x.isAnnotationPresent(Store.class)).toList();
 		{
@@ -179,6 +183,10 @@ public class AddressBookBackend {
 
 	public Properties configuration() {
 		return configuration;
+	}
+
+	public Converter converter() {
+		return converter;
 	}
 
 	public DiFactory diFactory() {
